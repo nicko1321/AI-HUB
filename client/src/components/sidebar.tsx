@@ -1,0 +1,57 @@
+import { Link, useLocation } from "wouter";
+import { Video, Grid3x3, List, Settings, BarChart3, Shield } from "lucide-react";
+import HubSelector from "./hub-selector";
+import { cn } from "@/lib/utils";
+
+const navigation = [
+  { name: "Dashboard", href: "/", icon: Grid3x3 },
+  { name: "Video Wall", href: "/video-wall", icon: Video },
+  { name: "Events", href: "/events", icon: List },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Settings", href: "/settings", icon: Settings },
+];
+
+export default function Sidebar() {
+  const [location] = useLocation();
+
+  return (
+    <div className="w-64 bg-slate-900 border-r border-slate-700 flex flex-col">
+      {/* Logo/Brand */}
+      <div className="p-6 border-b border-slate-700">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+            <Video className="text-white text-sm w-4 h-4" />
+          </div>
+          <h1 className="text-xl font-semibold text-white">AI Hub Monitor</h1>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2">
+        {navigation.map((item) => {
+          const Icon = item.icon;
+          const isActive = location === item.href;
+          
+          return (
+            <Link key={item.name} href={item.href}>
+              <div
+                className={cn(
+                  "flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors cursor-pointer",
+                  isActive
+                    ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                    : "text-slate-300 hover:bg-slate-800"
+                )}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{item.name}</span>
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Hub Selector */}
+      <HubSelector />
+    </div>
+  );
+}
