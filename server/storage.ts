@@ -1,9 +1,10 @@
 import { 
-  hubs, cameras, events, speakers,
+  hubs, cameras, events, speakers, aiTriggers,
   type Hub, type InsertHub,
   type Camera, type InsertCamera,
   type Event, type InsertEvent,
-  type Speaker, type InsertSpeaker
+  type Speaker, type InsertSpeaker,
+  type AITrigger, type InsertAITrigger
 } from "@shared/schema";
 
 export interface IStorage {
@@ -37,6 +38,13 @@ export interface IStorage {
   createSpeaker(speaker: InsertSpeaker): Promise<Speaker>;
   updateSpeaker(id: number, updates: Partial<Speaker>): Promise<Speaker | undefined>;
   deleteSpeaker(id: number): Promise<boolean>;
+
+  // AI Trigger operations
+  getAITriggers(): Promise<AITrigger[]>;
+  getAITrigger(id: number): Promise<AITrigger | undefined>;
+  createAITrigger(trigger: InsertAITrigger): Promise<AITrigger>;
+  updateAITrigger(id: number, updates: Partial<AITrigger>): Promise<AITrigger | undefined>;
+  deleteAITrigger(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -44,14 +52,16 @@ export class MemStorage implements IStorage {
   private cameras: Map<number, Camera>;
   private events: Map<number, Event>;
   private speakers: Map<number, Speaker>;
-  private currentId: { hubs: number; cameras: number; events: number; speakers: number };
+  private aiTriggers: Map<number, AITrigger>;
+  private currentId: { hubs: number; cameras: number; events: number; speakers: number; aiTriggers: number };
 
   constructor() {
     this.hubs = new Map();
     this.cameras = new Map();
     this.events = new Map();
     this.speakers = new Map();
-    this.currentId = { hubs: 1, cameras: 1, events: 1, speakers: 1 };
+    this.aiTriggers = new Map();
+    this.currentId = { hubs: 1, cameras: 1, events: 1, speakers: 1, aiTriggers: 1 };
     
     // Initialize with sample data
     this.initializeSampleData();
@@ -126,6 +136,41 @@ export class MemStorage implements IStorage {
 
     sampleSpeakers.forEach(speaker => this.speakers.set(speaker.id, speaker));
     this.currentId.speakers = 3;
+
+    // Create sample AI triggers
+    const sampleTriggers: AITrigger[] = [
+      {
+        id: 1,
+        name: "Weapon Detection",
+        description: "Alert when weapons are detected in camera feeds",
+        prompt: "Analyze this image for any weapons including guns, knives, or other dangerous objects. Alert if confidence is above 80%.",
+        severity: "critical",
+        enabled: true,
+        confidence: 80,
+        hubIds: ["1", "2"],
+        cameraIds: [],
+        actions: ["email", "notification", "sms"],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 2,
+        name: "Suspicious Behavior",
+        description: "Detect loitering, running, or unusual movement patterns",
+        prompt: "Look for suspicious behavior such as loitering near entrances, people running in non-emergency situations, or unusual movement patterns.",
+        severity: "medium",
+        enabled: true,
+        confidence: 70,
+        hubIds: ["1"],
+        cameraIds: ["1", "2"],
+        actions: ["notification"],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    sampleTriggers.forEach(trigger => this.aiTriggers.set(trigger.id, trigger));
+    this.currentId.aiTriggers = 3;
   }
 
   // Hub operations
@@ -286,6 +331,50 @@ export class MemStorage implements IStorage {
 
   async deleteSpeaker(id: number): Promise<boolean> {
     return this.speakers.delete(id);
+  }
+
+  // AI Trigger operations
+  async getAITriggers(): Promise<AITrigger[]> {
+    return Array.from(this.aiTriggers.values());
+  }
+
+  async getAITrigger(id: number): Promise<AITrigger | undefined> {
+    return this.aiTriggers.get(id);
+  }
+
+  async createAITrigger(trigger: InsertAITrigger): Promise<AITrigger> {
+    const id = this.currentId.aiTriggers++;
+    const newTrigger: AITrigger = {
+      ...trigger,
+      id,
+      description: trigger.description || null,
+      enabled: trigger.enabled ?? true,
+      confidence: trigger.confidence ?? 70,
+      hubIds: trigger.hubIds ?? null,
+      cameraIds: trigger.cameraIds ?? null,
+      actions: trigger.actions ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.aiTriggers.set(id, newTrigger);
+    return newTrigger;
+  }
+
+  async updateAITrigger(id: number, updates: Partial<AITrigger>): Promise<AITrigger | undefined> {
+    const trigger = this.aiTriggers.get(id);
+    if (!trigger) return undefined;
+
+    const updatedTrigger = { 
+      ...trigger, 
+      ...updates, 
+      updatedAt: new Date() 
+    };
+    this.aiTriggers.set(id, updatedTrigger);
+    return updatedTrigger;
+  }
+
+  async deleteAITrigger(id: number): Promise<boolean> {
+    return this.aiTriggers.delete(id);
   }
 }
 

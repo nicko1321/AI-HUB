@@ -49,6 +49,21 @@ export const speakers = pgTable("speakers", {
   isActive: boolean("is_active").notNull().default(false),
 });
 
+export const aiTriggers = pgTable("ai_triggers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  prompt: text("prompt").notNull(),
+  severity: text("severity").notNull(), // low, medium, high, critical
+  enabled: boolean("enabled").notNull().default(true),
+  confidence: integer("confidence").notNull().default(70),
+  hubIds: text("hub_ids").array(),
+  cameraIds: text("camera_ids").array(),
+  actions: text("actions").array(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const insertHubSchema = createInsertSchema(hubs).omit({
   id: true,
   lastHeartbeat: true,
@@ -67,6 +82,12 @@ export const insertSpeakerSchema = createInsertSchema(speakers).omit({
   id: true,
 });
 
+export const insertAITriggerSchema = createInsertSchema(aiTriggers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type Hub = typeof hubs.$inferSelect;
 export type InsertHub = z.infer<typeof insertHubSchema>;
 export type Camera = typeof cameras.$inferSelect;
@@ -75,3 +96,5 @@ export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Speaker = typeof speakers.$inferSelect;
 export type InsertSpeaker = z.infer<typeof insertSpeakerSchema>;
+export type AITrigger = typeof aiTriggers.$inferSelect;
+export type InsertAITrigger = z.infer<typeof insertAITriggerSchema>;

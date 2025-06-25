@@ -1,5 +1,6 @@
 import React, { useState, useContext } from "react";
 import { useEvents, useCameras, useHubs } from "@/hooks/use-hub-data";
+import { useAITriggers, useCreateAITrigger, useUpdateAITrigger, useDeleteAITrigger } from "@/hooks/use-ai-triggers";
 import { HubContext } from "@/components/hub-selector";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,8 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { TrendingUp, Activity, AlertTriangle, Video, Calendar, Download, ExternalLink } from "lucide-react";
+import { TrendingUp, Activity, AlertTriangle, Video, Calendar, Download, ExternalLink, Brain, Zap } from "lucide-react";
 import { formatTimestamp } from "@/lib/utils";
+import CustomAnalyticsBuilder from "@/components/custom-analytics-builder";
+import AITriggerConfig from "@/components/ai-trigger-config";
+import { useToast } from "@/hooks/use-toast";
+import type { AITrigger } from "@shared/schema";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -17,7 +22,13 @@ export default function Analytics() {
   const { data: events, isLoading: eventsLoading } = useEvents();
   const { data: cameras, isLoading: camerasLoading } = useCameras();
   const { data: hubs, isLoading: hubsLoading } = useHubs();
+  const { data: aiTriggers, isLoading: triggersLoading } = useAITriggers();
+  const createAITrigger = useCreateAITrigger();
+  const updateAITrigger = useUpdateAITrigger();
+  const deleteAITrigger = useDeleteAITrigger();
+  const { toast } = useToast();
   const [timeRange, setTimeRange] = useState("24h");
+  const [customAnalytics, setCustomAnalytics] = useState<Array<any>>([]);
 
   // Process data for analytics
   const processEventsByHour = () => {
@@ -103,7 +114,77 @@ export default function Analytics() {
   const activeCameras = cameras?.filter(c => c.status === "online").length || 0;
   const onlineHubs = hubs?.filter(h => h.status === "online").length || 0;
 
-  if (eventsLoading || camerasLoading || hubsLoading) {
+  // AI Trigger handlers
+  const handleTriggerCreate = async (trigger: Omit<AITrigger, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      await createAITrigger.mutateAsync(trigger);
+      toast({
+        title: "AI Trigger Created",
+        description: `${trigger.name} has been created successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create AI trigger",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTriggerUpdate = async (id: string, updates: Partial<AITrigger>) => {
+    try {
+      await updateAITrigger.mutateAsync({ id: parseInt(id), updates });
+      toast({
+        title: "AI Trigger Updated",
+        description: "Trigger settings have been updated",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update AI trigger",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTriggerDelete = async (id: string) => {
+    try {
+      await deleteAITrigger.mutateAsync(parseInt(id));
+      toast({
+        title: "AI Trigger Deleted",
+        description: "Trigger has been removed",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete AI trigger",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Custom Analytics handlers
+  const handleAnalyticCreate = (analytic: any) => {
+    setCustomAnalytics(prev => [...prev, { ...analytic, id: Date.now().toString() }]);
+    toast({
+      title: "Custom Analytics Created",
+      description: `${analytic.name} has been created successfully`,
+    });
+  };
+
+  const handleAnalyticUpdate = (id: string, updates: any) => {
+    setCustomAnalytics(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+  };
+
+  const handleAnalyticDelete = (id: string) => {
+    setCustomAnalytics(prev => prev.filter(a => a.id !== id));
+    toast({
+      title: "Custom Analytics Deleted",
+      description: "Analytics has been removed",
+    });
+  };
+
+  if (eventsLoading || camerasLoading || hubsLoading || triggersLoading) {
     return (
       <>
         <header className="bg-slate-900 border-b border-slate-700 px-6 py-4">
@@ -174,68 +255,86 @@ export default function Analytics() {
 
       {/* Analytics Content */}
       <main className="flex-1 overflow-auto p-6">
-        <div className="space-y-6">
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="bg-slate-850 border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm">Total Events</p>
-                    <p className="text-2xl font-semibold text-white">{totalEvents}</p>
-                    <p className="text-xs text-green-400 mt-1">+12% from last week</p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center">
-                    <Activity className="w-6 h-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        <Tabs defaultValue="overview" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <TabsList className="bg-slate-800 border-slate-700">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-slate-700">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="ai-triggers" className="data-[state=active]:bg-slate-700">
+                <Brain className="w-4 h-4 mr-2" />
+                AI Triggers
+              </TabsTrigger>
+              <TabsTrigger value="custom-analytics" className="data-[state=active]:bg-slate-700">
+                <Zap className="w-4 h-4 mr-2" />
+                Custom Analytics
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-            <Card className="bg-slate-850 border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm">Critical Events</p>
-                    <p className="text-2xl font-semibold text-white">{criticalEvents}</p>
-                    <p className="text-xs text-red-400 mt-1">-8% from last week</p>
-                  </div>
-                  <div className="w-12 h-12 bg-red-500/10 text-red-400 rounded-lg flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="overview" className="space-y-6">
+            {/* Key Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="bg-slate-850 border-slate-700">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-slate-400 text-sm">Total Events</p>
+                        <p className="text-2xl font-semibold text-white">{totalEvents}</p>
+                        <p className="text-xs text-green-400 mt-1">+12% from last week</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center">
+                        <Activity className="w-6 h-6" />
+                      </div>
+                    </div>
+                </CardContent>
+              </Card>
 
-            <Card className="bg-slate-850 border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm">Active Cameras</p>
-                    <p className="text-2xl font-semibold text-white">{activeCameras}</p>
-                    <p className="text-xs text-green-400 mt-1">98% uptime</p>
+              <Card className="bg-slate-850 border-slate-700">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-400 text-sm">Critical Events</p>
+                      <p className="text-2xl font-semibold text-white">{criticalEvents}</p>
+                      <p className="text-xs text-red-400 mt-1">-8% from last week</p>
+                    </div>
+                    <div className="w-12 h-12 bg-red-500/10 text-red-400 rounded-lg flex items-center justify-center">
+                      <AlertTriangle className="w-6 h-6" />
+                    </div>
                   </div>
-                  <div className="w-12 h-12 bg-green-500/10 text-green-400 rounded-lg flex items-center justify-center">
-                    <Video className="w-6 h-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card className="bg-slate-850 border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm">Online Hubs</p>
-                    <p className="text-2xl font-semibold text-white">{onlineHubs}</p>
-                    <p className="text-xs text-green-400 mt-1">All systems operational</p>
+              <Card className="bg-slate-850 border-slate-700">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-slate-400 text-sm">Active Cameras</p>
+                        <p className="text-2xl font-semibold text-white">{activeCameras}</p>
+                        <p className="text-xs text-green-400 mt-1">98% uptime</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-500/10 text-green-400 rounded-lg flex items-center justify-center">
+                        <Video className="w-6 h-6" />
+                      </div>
+                    </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-850 border-slate-700">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-400 text-sm">Online Hubs</p>
+                      <p className="text-2xl font-semibold text-white">{onlineHubs}</p>
+                      <p className="text-xs text-green-400 mt-1">All systems operational</p>
+                    </div>
+                    <div className="w-12 h-12 bg-purple-500/10 text-purple-400 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6" />
+                    </div>
                   </div>
-                  <div className="w-12 h-12 bg-purple-500/10 text-purple-400 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
           </div>
 
           {/* Charts */}
@@ -443,7 +542,80 @@ export default function Analytics() {
               </div>
             </CardContent>
           </Card>
-        </div>
+          </TabsContent>
+
+          {/* AI Triggers Tab */}
+          <TabsContent value="ai-triggers" className="space-y-6">
+            <Card className="bg-slate-850 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center space-x-2">
+                  <Brain className="w-5 h-5 text-sky-400" />
+                  <span>AI Event Triggers</span>
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Configure AI-powered image analysis to automatically detect specific scenarios like weapons, suspicious behavior, or any custom analytics you define
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="text-center py-12">
+                  <Brain className="w-12 h-12 text-sky-400 mx-auto mb-4" />
+                  <p className="text-white text-lg mb-2">AI Trigger Configuration</p>
+                  <p className="text-slate-400 mb-4">
+                    Create custom AI triggers like weapon detection, suspicious behavior analysis, or any scenario you want to monitor
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                    <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                      <h4 className="text-white font-medium mb-2">Active AI Triggers</h4>
+                      <p className="text-slate-400 text-sm">{aiTriggers?.length || 0} triggers configured</p>
+                    </div>
+                    <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                      <h4 className="text-white font-medium mb-2">Ready for Integration</h4>
+                      <p className="text-slate-400 text-sm">OpenAI Vision API support</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Custom Analytics Tab */}
+          <TabsContent value="custom-analytics" className="space-y-6">
+            <Card className="bg-slate-850 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center space-x-2">
+                  <Zap className="w-5 h-5 text-sky-400" />
+                  <span>Custom Analytics Builder</span>
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Create any type of AI-powered analytics for your security cameras. From weapon detection to custom behavior analysis - unlimited possibilities
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="text-center py-12">
+                  <Zap className="w-12 h-12 text-sky-400 mx-auto mb-4" />
+                  <p className="text-white text-lg mb-2">Unlimited Custom Analytics</p>
+                  <p className="text-slate-400 mb-4">
+                    Build any analytics you can imagine - from security monitoring to operational insights
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+                    <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                      <h4 className="text-white font-medium mb-2">Security Analytics</h4>
+                      <p className="text-slate-400 text-sm">Weapon detection, unauthorized access, suspicious behavior</p>
+                    </div>
+                    <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                      <h4 className="text-white font-medium mb-2">Operational Analytics</h4>
+                      <p className="text-slate-400 text-sm">Crowd monitoring, traffic flow, equipment status</p>
+                    </div>
+                    <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                      <h4 className="text-white font-medium mb-2">Custom Scenarios</h4>
+                      <p className="text-slate-400 text-sm">Any scenario you define with natural language prompts</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </>
   );

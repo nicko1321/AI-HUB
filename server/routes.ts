@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertHubSchema, insertCameraSchema, insertEventSchema, insertSpeakerSchema } from "@shared/schema";
+import { insertHubSchema, insertCameraSchema, insertEventSchema, insertSpeakerSchema, insertAITriggerSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -226,6 +226,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(speaker);
     } catch (error) {
       res.status(500).json({ message: "Failed to update speaker" });
+    }
+  });
+
+  // AI Trigger routes
+  app.get("/api/ai-triggers", async (req, res) => {
+    try {
+      const triggers = await storage.getAITriggers();
+      res.json(triggers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch AI triggers" });
+    }
+  });
+
+  app.get("/api/ai-triggers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const trigger = await storage.getAITrigger(id);
+      if (!trigger) {
+        return res.status(404).json({ message: "AI trigger not found" });
+      }
+      res.json(trigger);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch AI trigger" });
+    }
+  });
+
+  app.post("/api/ai-triggers", async (req, res) => {
+    try {
+      const validatedData = insertAITriggerSchema.parse(req.body);
+      const trigger = await storage.createAITrigger(validatedData);
+      res.status(201).json(trigger);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create AI trigger" });
+    }
+  });
+
+  app.patch("/api/ai-triggers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const trigger = await storage.updateAITrigger(id, req.body);
+      if (!trigger) {
+        return res.status(404).json({ message: "AI trigger not found" });
+      }
+      res.json(trigger);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update AI trigger" });
+    }
+  });
+
+  app.delete("/api/ai-triggers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteAITrigger(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "AI trigger not found" });
+      }
+      res.json({ message: "AI trigger deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete AI trigger" });
+    }
+  });
+
+  // AI Analysis endpoint for processing camera images
+  app.post("/api/ai-triggers/analyze", async (req, res) => {
+    try {
+      const { imageData, triggerId } = req.body;
+      
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ message: "OpenAI API key not configured" });
+      }
+
+      const trigger = await storage.getAITrigger(triggerId);
+      if (!trigger || !trigger.enabled) {
+        return res.status(404).json({ message: "AI trigger not found or disabled" });
+      }
+
+      // This would integrate with OpenAI Vision API in production
+      // For now, return a mock response for demonstration
+      const analysisResult = {
+        detected: Math.random() > 0.7, // Simulate detection
+        confidence: Math.floor(Math.random() * 100),
+        description: `Analysis using prompt: "${trigger.prompt}"`,
+        triggerId: trigger.id,
+        timestamp: new Date()
+      };
+
+      res.json(analysisResult);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to analyze image" });
     }
   });
 
