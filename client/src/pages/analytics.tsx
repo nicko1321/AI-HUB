@@ -1,61 +1,41 @@
-import React, { useState, useContext } from "react";
-import { useEvents, useCameras, useHubs } from "@/hooks/use-hub-data";
-import { useAITriggers, useCreateAITrigger, useUpdateAITrigger, useDeleteAITrigger } from "@/hooks/use-ai-triggers";
-import { HubContext } from "@/components/hub-selector";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { TrendingUp, Activity, AlertTriangle, Video, Calendar, Download, ExternalLink, Brain, Zap } from "lucide-react";
-import { formatTimestamp } from "@/lib/utils";
-import CustomAnalyticsBuilder from "@/components/custom-analytics-builder";
-import AITriggerConfig from "@/components/ai-trigger-config";
+import { 
+  Activity, 
+  AlertTriangle, 
+  Camera as CameraIcon, 
+  TrendingUp, 
+  Shield, 
+  Eye,
+  BarChart3,
+  Target,
+  Zap
+} from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useToast } from "@/hooks/use-toast";
-import type { AITrigger } from "@shared/schema";
-
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+import { useAITriggers, useCreateAITrigger, useUpdateAITrigger, useDeleteAITrigger } from "@/hooks/use-ai-triggers";
+import { useHubs } from "@/hooks/use-hub-data";
+import AITriggerConfig from "@/components/ai-trigger-config";
+import CustomAnalyticsBuilder from "@/components/custom-analytics-builder";
+import type { Hub, Camera, Event, AITrigger } from "@shared/schema";
 
 export default function Analytics() {
-  const { selectedHubId } = useContext(HubContext);
-  const { data: events, isLoading: eventsLoading } = useEvents();
-  const { data: cameras, isLoading: camerasLoading } = useCameras();
-  const { data: hubs, isLoading: hubsLoading } = useHubs();
-  const { data: aiTriggers, isLoading: triggersLoading } = useAITriggers();
+  const { toast } = useToast();
+  
+  // Data queries
+  const { data: hubs } = useQuery<Hub[]>({ queryKey: ["/api/hubs"] });
+  const { data: cameras } = useQuery<Camera[]>({ queryKey: ["/api/cameras"] });
+  const { data: events } = useQuery<Event[]>({ queryKey: ["/api/events"] });
+  const { data: aiTriggers } = useAITriggers();
+  
+  // Mutations
   const createAITrigger = useCreateAITrigger();
   const updateAITrigger = useUpdateAITrigger();
   const deleteAITrigger = useDeleteAITrigger();
-  const { toast } = useToast();
-  const [timeRange, setTimeRange] = useState("24h");
-  const [customAnalytics, setCustomAnalytics] = useState<Array<any>>([]);
-
-  // Process data for analytics
-  const processEventsByHour = () => {
-    if (!events) return [];
-    
-    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const hourlyData = new Array(24).fill(0).map((_, index) => {
-      const hour = new Date(last24Hours.getTime() + index * 60 * 60 * 1000);
-      return {
-        hour: hour.getHours(),
-        events: 0,
-        time: hour.toISOString()
-      };
-    });
-
-    events
-      .filter(event => new Date(event.timestamp) >= last24Hours)
-      .forEach(event => {
-        const eventHour = new Date(event.timestamp).getHours();
-        const dataPoint = hourlyData.find(d => d.hour === eventHour);
-        if (dataPoint) {
-          dataPoint.events++;
-        }
-      });
-
-    return hourlyData;
-  };
 
   const processEventsBySeverity = () => {
     if (!events) return [];
@@ -89,22 +69,18 @@ export default function Analytics() {
   const processHubActivity = () => {
     if (!events || !hubs) return [];
     
-    return hubs.map(hub => {
-      const hubEvents = events.filter(event => event.hubId === hub.id);
-      const hubCameras = cameras?.filter(camera => camera.hubId === hub.id) || [];
-      const activeCameras = hubCameras.filter(camera => camera.status === "online").length;
-      
-      return {
-        name: hub.name,
-        events: hubEvents.length,
-        cameras: activeCameras,
-        status: hub.status,
-        location: hub.location
-      };
-    });
+    const hubEventCount = events.reduce((acc, event) => {
+      acc[event.hubId] = (acc[event.hubId] || 0) + 1;
+      return acc;
+    }, {} as Record<number, number>);
+
+    return hubs.map(hub => ({
+      name: hub.name,
+      events: hubEventCount[hub.id] || 0,
+      status: hub.status
+    }));
   };
 
-  const hourlyData = processEventsByHour();
   const severityData = processEventsBySeverity();
   const typeData = processEventsByType();
   const hubActivityData = processHubActivity();
@@ -113,6 +89,28 @@ export default function Analytics() {
   const criticalEvents = events?.filter(e => e.severity === "critical").length || 0;
   const activeCameras = cameras?.filter(c => c.status === "online").length || 0;
   const onlineHubs = hubs?.filter(h => h.status === "online").length || 0;
+
+  // Custom analytics state (in-memory for demo)
+  const [customAnalytics, setCustomAnalytics] = useState([
+    {
+      id: '1',
+      name: 'Parking Lot Monitoring',
+      description: 'Monitor vehicle activity in parking areas',
+      category: 'Security',
+      prompt: 'Monitor parking lots for unauthorized vehicles, suspicious activity, or security breaches',
+      severity: 'medium' as const,
+      enabled: true,
+      hubIds: [1],
+      cameraIds: [3, 4],
+      confidence: 75,
+      timeframe: '24h',
+      actions: ['notification', 'email'],
+      conditions: [
+        { field: 'time', operator: 'between', value: '22:00-06:00' },
+        { field: 'zone', operator: 'equals', value: 'parking_lot' }
+      ]
+    }
+  ]);
 
   // AI Trigger handlers
   const handleTriggerCreate = async (trigger: Omit<AITrigger, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -165,129 +163,80 @@ export default function Analytics() {
 
   // Custom Analytics handlers
   const handleAnalyticCreate = (analytic: any) => {
-    setCustomAnalytics(prev => [...prev, { ...analytic, id: Date.now().toString() }]);
+    const newAnalytic = {
+      ...analytic,
+      id: Date.now().toString()
+    };
+    setCustomAnalytics(prev => [...prev, newAnalytic]);
     toast({
-      title: "Custom Analytics Created",
+      title: "Custom Analytic Created",
       description: `${analytic.name} has been created successfully`,
     });
   };
 
   const handleAnalyticUpdate = (id: string, updates: any) => {
-    setCustomAnalytics(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
-  };
-
-  const handleAnalyticDelete = (id: string) => {
-    setCustomAnalytics(prev => prev.filter(a => a.id !== id));
+    setCustomAnalytics(prev => 
+      prev.map(analytic => 
+        analytic.id === id ? { ...analytic, ...updates } : analytic
+      )
+    );
     toast({
-      title: "Custom Analytics Deleted",
-      description: "Analytics has been removed",
+      title: "Custom Analytic Updated",
+      description: "Analytics settings have been updated",
     });
   };
 
-  if (eventsLoading || camerasLoading || hubsLoading || triggersLoading) {
-    return (
-      <>
-        <header className="bg-slate-900 border-b border-slate-700 px-6 py-4">
-          <Skeleton className="h-8 w-32" />
-        </header>
-        <main className="flex-1 overflow-auto p-6">
-          <div className="space-y-6">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-64 bg-slate-850" />
-            ))}
-          </div>
-        </main>
-      </>
-    );
-  }
+  const handleAnalyticDelete = (id: string) => {
+    setCustomAnalytics(prev => prev.filter(analytic => analytic.id !== id));
+    toast({
+      title: "Custom Analytic Deleted",
+      description: "Analytic has been removed",
+    });
+  };
+
+  const SEVERITY_COLORS = {
+    critical: "#ef4444",
+    high: "#f97316", 
+    medium: "#eab308",
+    low: "#10b981"
+  };
 
   return (
     <>
-      {/* Top Bar */}
-      <header className="bg-slate-900 border-b border-slate-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h2 className="text-2xl font-semibold text-white">Analytics</h2>
-            <div className="flex items-center space-x-2 text-sm text-slate-400">
-              <span>{totalEvents} total events</span>
-              {selectedHubId && (
-                <>
-                  <span>•</span>
-                  <span>Hub {selectedHubId}</span>
-                </>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-32 bg-slate-800 border-slate-600 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-600">
-                <SelectItem value="24h" className="text-white hover:bg-slate-700">Last 24h</SelectItem>
-                <SelectItem value="7d" className="text-white hover:bg-slate-700">Last 7 days</SelectItem>
-                <SelectItem value="30d" className="text-white hover:bg-slate-700">Last 30 days</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-slate-600 text-slate-300 hover:text-white"
-              onClick={() => window.open("https://securewithnick.com", "_blank")}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              SecureWithNick.com
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-slate-600 text-slate-300 hover:text-white"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export Report
-            </Button>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Analytics</h1>
+          <p className="text-slate-400 mt-1">Advanced AI-powered security analytics and insights</p>
         </div>
-      </header>
+      </div>
 
-      {/* Analytics Content */}
-      <main className="flex-1 overflow-auto p-6">
-        <Tabs defaultValue="overview" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <TabsList className="bg-slate-800 border-slate-700">
-              <TabsTrigger value="overview" className="data-[state=active]:bg-slate-700">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="ai-triggers" className="data-[state=active]:bg-slate-700">
-                <Brain className="w-4 h-4 mr-2" />
-                AI Triggers
-              </TabsTrigger>
-              <TabsTrigger value="custom-analytics" className="data-[state=active]:bg-slate-700">
-                <Zap className="w-4 h-4 mr-2" />
-                Custom Analytics
-              </TabsTrigger>
-            </TabsList>
-          </div>
+      <main className="space-y-6">
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-900 border-slate-700">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-slate-800 text-white">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="ai-triggers" className="data-[state=active]:bg-slate-800 text-white">
+              AI Triggers
+            </TabsTrigger>
+            <TabsTrigger value="custom-analytics" className="data-[state=active]:bg-slate-800 text-white">
+              Custom Analytics
+            </TabsTrigger>
+          </TabsList>
 
+          {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="bg-slate-850 border-slate-700">
                 <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-slate-400 text-sm">Total Events</p>
-                        <p className="text-2xl font-semibold text-white">{totalEvents}</p>
-                        <p className="text-xs text-green-400 mt-1">+12% from last week</p>
-                      </div>
-                      <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center">
-                        <Activity className="w-6 h-6" />
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-400 text-sm">Total Events</p>
+                      <p className="text-2xl font-bold text-white">{totalEvents}</p>
                     </div>
+                    <Activity className="w-8 h-8 text-blue-400" />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -296,28 +245,22 @@ export default function Analytics() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-400 text-sm">Critical Events</p>
-                      <p className="text-2xl font-semibold text-white">{criticalEvents}</p>
-                      <p className="text-xs text-red-400 mt-1">-8% from last week</p>
+                      <p className="text-2xl font-bold text-red-400">{criticalEvents}</p>
                     </div>
-                    <div className="w-12 h-12 bg-red-500/10 text-red-400 rounded-lg flex items-center justify-center">
-                      <AlertTriangle className="w-6 h-6" />
-                    </div>
+                    <AlertTriangle className="w-8 h-8 text-red-400" />
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-slate-850 border-slate-700">
                 <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-slate-400 text-sm">Active Cameras</p>
-                        <p className="text-2xl font-semibold text-white">{activeCameras}</p>
-                        <p className="text-xs text-green-400 mt-1">98% uptime</p>
-                      </div>
-                      <div className="w-12 h-12 bg-green-500/10 text-green-400 rounded-lg flex items-center justify-center">
-                        <Video className="w-6 h-6" />
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-400 text-sm">Active Cameras</p>
+                      <p className="text-2xl font-bold text-green-400">{activeCameras}</p>
                     </div>
+                    <CameraIcon className="w-8 h-8 text-green-400" />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -326,450 +269,153 @@ export default function Analytics() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-400 text-sm">Online Hubs</p>
-                      <p className="text-2xl font-semibold text-white">{onlineHubs}</p>
-                      <p className="text-xs text-green-400 mt-1">All systems operational</p>
+                      <p className="text-2xl font-bold text-blue-400">{onlineHubs}</p>
                     </div>
-                    <div className="w-12 h-12 bg-purple-500/10 text-purple-400 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6" />
-                    </div>
+                    <Shield className="w-8 h-8 text-blue-400" />
                   </div>
                 </CardContent>
               </Card>
-          </div>
+            </div>
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {/* Event Timeline */}
-            <Card className="bg-slate-850 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">Event Timeline (24h)</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Events distributed by hour over the last 24 hours
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={hourlyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="hour" 
-                      stroke="#9ca3af"
-                      tickFormatter={(value) => `${value}:00`}
-                    />
-                    <YAxis stroke="#9ca3af" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '6px'
-                      }}
-                      labelFormatter={(value) => `${value}:00`}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="events" 
-                      stroke="#3b82f6" 
-                      strokeWidth={2}
-                      dot={{ fill: '#3b82f6', strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Events by Severity */}
+              <Card className="bg-slate-850 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <BarChart3 className="w-5 h-5" />
+                    <span>Events by Severity</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={severityData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          label={({ name, value }) => `${name}: ${value}`}
+                        >
+                          {severityData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={SEVERITY_COLORS[entry.severity as keyof typeof SEVERITY_COLORS]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: '#1e293b', 
+                            border: '1px solid #475569',
+                            borderRadius: '8px',
+                            color: '#fff'
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Event Severity Distribution */}
-            <Card className="bg-slate-850 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">Event Severity Distribution</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Breakdown of events by severity level
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={severityData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {severityData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '6px'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Event Types */}
-            <Card className="bg-slate-850 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">Event Types</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Distribution of events by type
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={typeData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="type" stroke="#9ca3af" />
-                    <YAxis stroke="#9ca3af" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '6px'
-                      }}
-                    />
-                    <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+              {/* Events by Type */}
+              <Card className="bg-slate-850 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <TrendingUp className="w-5 h-5" />
+                    <span>Events by Type</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={typeData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis 
+                          dataKey="type" 
+                          stroke="#9ca3af"
+                          fontSize={12}
+                        />
+                        <YAxis stroke="#9ca3af" fontSize={12} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: '#1e293b', 
+                            border: '1px solid #475569',
+                            borderRadius: '8px',
+                            color: '#fff'
+                          }}
+                        />
+                        <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Hub Activity */}
             <Card className="bg-slate-850 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white">Hub Activity</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Events and camera status by hub
-                </CardDescription>
+                <CardTitle className="text-white flex items-center space-x-2">
+                  <Eye className="w-5 h-5" />
+                  <span>Hub Activity</span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={hubActivityData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="name" stroke="#9ca3af" />
-                    <YAxis stroke="#9ca3af" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '6px'
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="events" fill="#3b82f6" name="Events" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="cameras" fill="#10b981" name="Active Cameras" radius={[2, 2, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={hubActivityData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke="#9ca3af"
+                        fontSize={12}
+                      />
+                      <YAxis stroke="#9ca3af" fontSize={12} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: '1px solid #475569',
+                          borderRadius: '8px',
+                          color: '#fff'
+                        }}
+                      />
+                      <Bar dataKey="events" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Detailed Analytics */}
-          <Card className="bg-slate-850 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Security Intelligence Insights</CardTitle>
-              <CardDescription className="text-slate-400">
-                AI-powered analytics and recommendations from SecureWithNick.com
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="text-white font-medium">Key Insights</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0" />
-                      <span className="text-slate-300 text-sm">
-                        System performance is optimal with 98% camera uptime
-                      </span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 flex-shrink-0" />
-                      <span className="text-slate-300 text-sm">
-                        Motion detection events peak between 6-8 PM
-                      </span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
-                      <span className="text-slate-300 text-sm">
-                        Hub-01 shows highest activity with {hubActivityData.find(h => h.name === 'Hub-01')?.events || 0} events
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="text-white font-medium">Recommendations</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0" />
-                      <span className="text-slate-300 text-sm">
-                        Consider adding motion zones to reduce false positives
-                      </span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-sky-400 rounded-full mt-2 flex-shrink-0" />
-                      <span className="text-slate-300 text-sm">
-                        Implement automated event acknowledgment for low-priority alerts
-                      </span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0" />
-                      <span className="text-slate-300 text-sm">
-                        Schedule regular system health checks during off-peak hours
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t border-slate-700">
-                <Button
-                  variant="outline"
-                  className="border-slate-600 text-slate-300 hover:text-white"
-                  onClick={() => window.open("https://securewithnick.com", "_blank")}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Learn More at SecureWithNick.com
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
           </TabsContent>
 
           {/* AI Triggers Tab */}
           <TabsContent value="ai-triggers" className="space-y-6">
-            {/* Smart AI Triggers Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <Card className="bg-slate-850 border-slate-700">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-400 text-sm">Active Triggers</p>
-                      <p className="text-2xl font-semibold text-white">{aiTriggers?.filter(t => t.enabled).length || 0}</p>
-                      <p className="text-xs text-green-400 mt-1">Running analytics</p>
-                    </div>
-                    <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center">
-                      <Brain className="w-6 h-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-850 border-slate-700">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-400 text-sm">AI Detections Today</p>
-                      <p className="text-2xl font-semibold text-white">{events?.filter(e => e.type.includes('AI') || e.type.includes('detection')).length || 0}</p>
-                      <p className="text-xs text-amber-400 mt-1">AI-powered events</p>
-                    </div>
-                    <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-lg flex items-center justify-center">
-                      <Zap className="w-6 h-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-850 border-slate-700">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-400 text-sm">Accuracy Rate</p>
-                      <p className="text-2xl font-semibold text-white">94.2%</p>
-                      <p className="text-xs text-green-400 mt-1">Learning continuously</p>
-                    </div>
-                    <div className="w-12 h-12 bg-green-500/10 text-green-400 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Smart Trigger Categories */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <Card className="bg-slate-850 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <Brain className="w-5 h-5 mr-2 text-blue-400" />
-                    Behavioral Analytics
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Advanced AI triggers for human behavior analysis
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
-                      <div>
-                        <p className="text-white text-sm font-medium">Loitering Detection</p>
-                        <p className="text-slate-400 text-xs">Identifies prolonged presence in restricted areas</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs text-slate-400">Active</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
-                      <div>
-                        <p className="text-white text-sm font-medium">Aggressive Behavior</p>
-                        <p className="text-slate-400 text-xs">Detects unusual movement patterns and gestures</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs text-slate-400">Active</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
-                      <div>
-                        <p className="text-white text-sm font-medium">Crowd Density Analysis</p>
-                        <p className="text-slate-400 text-xs">Monitors gathering sizes and social distancing</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
-                        <span className="text-xs text-slate-400">Learning</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
-                      <div>
-                        <p className="text-white text-sm font-medium">Fall Detection</p>
-                        <p className="text-slate-400 text-xs">Emergency response for elderly or workplace safety</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs text-slate-400">Active</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-850 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
-                    Threat Detection
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">
-                    High-priority security threat identification
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
-                      <div>
-                        <p className="text-white text-sm font-medium">Weapon Detection</p>
-                        <p className="text-slate-400 text-xs">AI-powered identification of weapons and threats</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs text-slate-400">Active</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
-                      <div>
-                        <p className="text-white text-sm font-medium">Unauthorized Entry</p>
-                        <p className="text-slate-400 text-xs">Detects breaches and forced entry attempts</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs text-slate-400">Active</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
-                      <div>
-                        <p className="text-white text-sm font-medium">License Plate Recognition</p>
-                        <p className="text-slate-400 text-xs">Vehicle identification and access control</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs text-slate-400">Active</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
-                      <div>
-                        <p className="text-white text-sm font-medium">Facial Recognition</p>
-                        <p className="text-slate-400 text-xs">Identity verification and access management</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
-                        <span className="text-xs text-slate-400">Beta</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Advanced Analytics Triggers */}
+            {/* Header with current active triggers */}
             <Card className="bg-slate-850 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white flex items-center">
-                  <Zap className="w-5 h-5 mr-2 text-purple-400" />
-                  Advanced Analytics Triggers
+                <CardTitle className="text-white flex items-center space-x-2">
+                  <Target className="w-5 h-5 text-emerald-400" />
+                  <span>Active AI Triggers</span>
                 </CardTitle>
                 <CardDescription className="text-slate-400">
-                  Smart triggers that learn from your environment and adapt to patterns
+                  Current AI-powered detection systems running across your network
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="text-white font-medium text-sm">Pattern Anomaly Detection</h4>
-                        <p className="text-slate-400 text-xs mt-1">Learns normal patterns and alerts on deviations</p>
-                      </div>
-                      <div className="w-2 h-2 bg-blue-400 rounded-full mt-1"></div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Confidence: 89%</span>
-                      <span className="text-blue-400">Learning</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="text-white font-medium text-sm">Multi-Camera Tracking</h4>
-                        <p className="text-slate-400 text-xs mt-1">Follows subjects across multiple camera feeds</p>
-                      </div>
+                  <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-white font-medium">Weapon Detection</h4>
                       <div className="w-2 h-2 bg-green-400 rounded-full mt-1"></div>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Confidence: 96%</span>
+                      <span className="text-slate-500">Confidence: 95%</span>
                       <span className="text-green-400">Active</span>
                     </div>
                   </div>
-
-                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="text-white font-medium text-sm">Predictive Alerts</h4>
-                        <p className="text-slate-400 text-xs mt-1">Anticipates incidents before they occur</p>
-                      </div>
-                      <div className="w-2 h-2 bg-purple-400 rounded-full mt-1"></div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Confidence: 78%</span>
-                      <span className="text-purple-400">Experimental</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="text-white font-medium text-sm">Environmental Analysis</h4>
-                        <p className="text-slate-400 text-xs mt-1">Monitors lighting, weather, and visibility changes</p>
-                      </div>
+                  <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-white font-medium">Person Detection</h4>
                       <div className="w-2 h-2 bg-green-400 rounded-full mt-1"></div>
                     </div>
                     <div className="flex items-center justify-between text-xs">
@@ -777,27 +423,9 @@ export default function Analytics() {
                       <span className="text-green-400">Active</span>
                     </div>
                   </div>
-
-                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="text-white font-medium text-sm">Object Left Behind</h4>
-                        <p className="text-slate-400 text-xs mt-1">Detects abandoned objects and unattended items</p>
-                      </div>
-                      <div className="w-2 h-2 bg-green-400 rounded-full mt-1"></div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Confidence: 87%</span>
-                      <span className="text-green-400">Active</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="text-white font-medium text-sm">Queue Management</h4>
-                        <p className="text-slate-400 text-xs mt-1">Analyzes wait times and crowd flow optimization</p>
-                      </div>
+                  <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-white font-medium">Intrusion Detection</h4>
                       <div className="w-2 h-2 bg-amber-400 rounded-full mt-1"></div>
                     </div>
                     <div className="flex items-center justify-between text-xs">
@@ -821,40 +449,14 @@ export default function Analytics() {
 
           {/* Custom Analytics Tab */}
           <TabsContent value="custom-analytics" className="space-y-6">
-            <Card className="bg-slate-850 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center space-x-2">
-                  <Zap className="w-5 h-5 text-sky-400" />
-                  <span>Custom Analytics Builder</span>
-                </CardTitle>
-                <CardDescription className="text-slate-400">
-                  Create any type of AI-powered analytics for your security cameras. From weapon detection to custom behavior analysis - unlimited possibilities
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center py-12">
-                  <Zap className="w-12 h-12 text-sky-400 mx-auto mb-4" />
-                  <p className="text-white text-lg mb-2">Unlimited Custom Analytics</p>
-                  <p className="text-slate-400 mb-4">
-                    Build any analytics you can imagine - from security monitoring to operational insights
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-                    <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
-                      <h4 className="text-white font-medium mb-2">Security Analytics</h4>
-                      <p className="text-slate-400 text-sm">Weapon detection, unauthorized access, suspicious behavior</p>
-                    </div>
-                    <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
-                      <h4 className="text-white font-medium mb-2">Operational Analytics</h4>
-                      <p className="text-slate-400 text-sm">Crowd monitoring, traffic flow, equipment status</p>
-                    </div>
-                    <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
-                      <h4 className="text-white font-medium mb-2">Custom Scenarios</h4>
-                      <p className="text-slate-400 text-sm">Any scenario you define with natural language prompts</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <CustomAnalyticsBuilder
+              onAnalyticCreate={handleAnalyticCreate}
+              onAnalyticUpdate={handleAnalyticUpdate}
+              onAnalyticDelete={handleAnalyticDelete}
+              analytics={customAnalytics || []}
+              hubs={hubs || []}
+              cameras={cameras || []}
+            />
           </TabsContent>
         </Tabs>
       </main>
