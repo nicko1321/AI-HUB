@@ -170,128 +170,151 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Tactical Dashboard Content */}
-      <main className="flex-1 bg-black p-4">
-        {/* Tactical Status Bar */}
-        <div className="grid grid-cols-4 gap-4 mb-4">
-          <div className="bg-slate-900 border border-slate-700 rounded p-3">
+      {/* Modern Dashboard Content */}
+      <main className="flex-1 bg-slate-50 dark:bg-slate-950 p-6">
+        {/* Modern Status Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs text-slate-400 font-mono">CAMERAS ACTIVE</div>
-                <div className="text-2xl font-bold text-green-400 font-mono">{activeCameras}</div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Cameras</p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white">{activeCameras}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Online and recording</p>
               </div>
-              <Video className="w-8 h-8 text-sky-400" />
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <Video className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
             </div>
           </div>
           
-          <div className="bg-slate-900 border border-slate-700 rounded p-3">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs text-slate-400 font-mono">ACTIVE THREATS</div>
-                <div className="text-2xl font-bold text-red-400 font-mono">{totalEvents}</div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Events</p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white">{totalEvents}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Requiring attention</p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-amber-400" />
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+              </div>
             </div>
           </div>
           
-          <div className="bg-slate-900 border border-slate-700 rounded p-3">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs text-slate-400 font-mono">SYSTEM STATUS</div>
-                <div className={`text-2xl font-bold font-mono ${selectedHub.status === "online" ? "text-green-400" : "text-red-400"}`}>
-                  {selectedHub.status === "online" ? "ONLINE" : "OFFLINE"}
-                </div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">System Health</p>
+                <p className={`text-3xl font-bold ${selectedHub.status === "online" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                  {selectedHub.status === "online" ? "Excellent" : "Poor"}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">All systems operational</p>
               </div>
-              <Heart className={`w-8 h-8 ${selectedHub.status === "online" ? "text-green-400" : "text-red-400"}`} />
+              <div className={`p-3 rounded-lg ${selectedHub.status === "online" ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"}`}>
+                <Heart className={`w-6 h-6 ${selectedHub.status === "online" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} />
+              </div>
             </div>
           </div>
           
-          <div className="bg-slate-900 border border-slate-700 rounded p-3">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs text-slate-400 font-mono">RESPONSE TIME</div>
-                <div className="text-2xl font-bold text-blue-400 font-mono">2.3s</div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Response Time</p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white">2.3s</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Average detection speed</p>
               </div>
-              <Clock className="w-8 h-8 text-blue-400" />
+              <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <Clock className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 h-[calc(100vh-200px)]">
-          {/* Main Camera Grid - Larger Column */}
-          <div className="col-span-2 bg-slate-900 border border-slate-700 rounded">
-            <div className="border-b border-slate-700 px-4 py-2 bg-slate-800">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white font-mono tracking-wider">LIVE SURVEILLANCE GRID</h3>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-red-400 font-mono">RECORDING</span>
-                  <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 ml-4">
-                    <Grid className="w-3 h-3 mr-1" />
-                    2x2
-                  </Button>
-                  <Button variant="outline" size="sm" className="border-slate-600 text-slate-300">
-                    <Maximize2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-            <div className="p-4">
-              {camerasLoading ? (
-                <div className="grid grid-cols-2 gap-4">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} className="aspect-video bg-slate-800 rounded border border-slate-600" />
-                  ))}
-                </div>
-              ) : (
-                <CameraGrid hubId={selectedHubId || undefined} maxCameras={4} showControls={true} />
-              )}
-            </div>
-          </div>
-
-          {/* Right Panel - Events and Controls */}
-          <div className="space-y-4">
-            {/* Critical Events */}
-            <div className="bg-slate-900 border border-slate-700 rounded flex-1">
-              <div className="border-b border-slate-700 px-4 py-2 bg-slate-800">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Live Camera Feeds */}
+          <div className="xl:col-span-2">
+            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="border-b border-slate-200 dark:border-slate-800 px-6 py-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-white font-mono tracking-wider">THREAT ALERTS</h3>
+                  <div className="flex items-center space-x-3">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Live Camera Feeds</h3>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm text-red-500 font-medium">Live</span>
+                    </div>
+                  </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-amber-400 font-mono">ACTIVE</span>
+                    <Button variant="outline" size="sm" className="text-slate-600 dark:text-slate-400">
+                      <Grid className="w-4 h-4 mr-2" />
+                      Grid View
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-slate-600 dark:text-slate-400">
+                      <Maximize2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </div>
-              <div className="p-4 h-80 overflow-y-auto">
+              <div className="p-6">
+                {camerasLoading ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <Skeleton key={i} className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg" />
+                    ))}
+                  </div>
+                ) : (
+                  <CameraGrid hubId={selectedHubId || undefined} maxCameras={4} showControls={true} />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="space-y-6">
+            {/* Recent Events */}
+            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="border-b border-slate-200 dark:border-slate-800 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Events</h3>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-amber-500 font-medium">{totalEvents} Active</span>
+                  </div>
+                </div>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
                 <EventList hubId={selectedHubId || undefined} limit={8} />
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-slate-900 border border-slate-700 rounded">
-              <div className="border-b border-slate-700 px-4 py-2 bg-slate-800">
-                <h3 className="text-sm font-bold text-white font-mono tracking-wider">TACTICAL CONTROLS</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="border-b border-slate-200 dark:border-slate-800 px-6 py-4">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Quick Actions</h3>
               </div>
-              <div className="p-4 space-y-3">
+              <div className="p-6 space-y-3">
                 {mainSpeaker && (
                   <Button 
                     onClick={handleToggleSpeaker}
                     disabled={!mainSpeaker || updateSpeaker.isPending}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-mono text-xs"
+                    className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
                   >
-                    <Volume2 className="w-3 h-3 mr-2" />
-                    {mainSpeaker.isActive ? "DISABLE COMMS" : "ENABLE COMMS"}
+                    <Volume2 className="w-4 h-4 mr-2" />
+                    {mainSpeaker.isActive ? "Disable Communications" : "Enable Communications"}
                   </Button>
                 )}
                 
-                <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-mono text-xs">
-                  <AlertTriangle className="w-3 h-3 mr-2" />
-                  EMERGENCY ALERT
+                <Button className="w-full justify-start bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  Emergency Alert
                 </Button>
                 
-                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-mono text-xs">
-                  <Users className="w-3 h-3 mr-2" />
-                  DISPATCH TEAM
+                <Button variant="outline" className="w-full justify-start border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                  <Users className="w-4 h-4 mr-2" />
+                  Dispatch Security Team
+                </Button>
+                
+                <Button variant="outline" className="w-full justify-start border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Footage
                 </Button>
               </div>
             </div>
