@@ -131,9 +131,9 @@ export default function Integrations() {
                   <div className="flex items-center space-x-3">
                     {getStatusIcon()}
                     <div>
-                      <CardTitle>Chekt Platform Integration</CardTitle>
+                      <CardTitle>CHeKT Platform Integration</CardTitle>
                       <CardDescription>
-                        Connect with Chekt's security management platform for enhanced monitoring and response
+                        Connect with CHeKT's security management platform for enhanced monitoring and response
                       </CardDescription>
                     </div>
                   </div>
@@ -144,12 +144,12 @@ export default function Integrations() {
                 {connectionStatus === "disconnected" && (
                   <div className="space-y-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="chekt-api-key">Chekt API Key</Label>
+                      <Label htmlFor="chekt-api-key">CHeKT API Key</Label>
                       <div className="flex space-x-2">
                         <Input
                           id="chekt-api-key"
                           type="password"
-                          placeholder="Enter your Chekt API key"
+                          placeholder="Enter your CHeKT API key"
                           value={chektApiKey}
                           onChange={(e) => setChektApiKey(e.target.value)}
                           className="flex-1"
