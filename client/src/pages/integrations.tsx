@@ -23,16 +23,17 @@ import {
 
 export default function Integrations() {
   const [chektApiKey, setChektApiKey] = useState("");
+  const [chektIpAddress, setChektIpAddress] = useState("");
   const [chektEnabled, setChektEnabled] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<"disconnected" | "connected" | "error">("disconnected");
   const { toast } = useToast();
 
   const handleChektConnection = async () => {
-    if (!chektApiKey.trim()) {
+    if (!chektApiKey.trim() || !chektIpAddress.trim()) {
       toast({
-        title: "API Key Required",
-        description: "Please enter your CHeKT API key to establish connection",
+        title: "Connection Details Required",
+        description: "Please enter both your CHeKT API key and IP address to establish connection",
         variant: "destructive",
       });
       return;
@@ -133,7 +134,7 @@ export default function Integrations() {
                     <div>
                       <CardTitle>CHeKT Platform Integration</CardTitle>
                       <CardDescription>
-                        Connect with CHeKT's security management platform for enhanced monitoring and response
+                        Connect with CHeKT's security management platform for enhanced monitoring and response. Requires both server IP address and API key for authentication.
                       </CardDescription>
                     </div>
                   </div>
@@ -143,6 +144,16 @@ export default function Integrations() {
               <CardContent className="space-y-6">
                 {connectionStatus === "disconnected" && (
                   <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="chekt-ip-address">CHeKT Server IP Address</Label>
+                      <Input
+                        id="chekt-ip-address"
+                        type="text"
+                        placeholder="192.168.1.100"
+                        value={chektIpAddress}
+                        onChange={(e) => setChektIpAddress(e.target.value)}
+                      />
+                    </div>
                     <div className="grid gap-2">
                       <Label htmlFor="chekt-api-key">CHeKT API Key</Label>
                       <div className="flex space-x-2">
@@ -156,7 +167,7 @@ export default function Integrations() {
                         />
                         <Button 
                           onClick={handleChektConnection}
-                          disabled={isConnecting || !chektApiKey.trim()}
+                          disabled={isConnecting || !chektApiKey.trim() || !chektIpAddress.trim()}
                           className="bg-blue-600 hover:bg-blue-700"
                         >
                           {isConnecting ? (
