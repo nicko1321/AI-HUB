@@ -6,7 +6,7 @@ import CameraGrid from "@/components/camera-grid";
 import EventList from "@/components/event-list";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Video, AlertTriangle, HardDrive, Heart, Shield, ShieldOff, Volume2, VolumeX, Expand, Download, FileText, Wrench } from "lucide-react";
+import { Video, AlertTriangle, Heart, Shield, ShieldOff, Volume2, VolumeX, Expand, Download, FileText, Wrench } from "lucide-react";
 import { getStatusColor } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -156,7 +156,7 @@ export default function Dashboard() {
       {/* Dashboard Content */}
       <main className="flex-1 overflow-auto p-6">
         {/* System Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatusCard
             title="Active Cameras"
             value={activeCameras}
@@ -171,14 +171,6 @@ export default function Dashboard() {
             icon={AlertTriangle}
             iconColor="bg-amber-500/10 text-amber-400"
             description="Recent activity"
-          />
-          
-          <StatusCard
-            title="Storage Used"
-            value="67%"
-            icon={HardDrive}
-            iconColor="bg-purple-500/10 text-purple-400"
-            description="Of allocated space"
           />
           
           <StatusCard
