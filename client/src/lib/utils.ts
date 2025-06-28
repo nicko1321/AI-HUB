@@ -64,3 +64,7 @@ export function getSeverityColor(severity: string): string {
       return "bg-slate-500";
   }
 }
+
+export function getArmedStatusColor(isArmed: boolean): string {
+  return isArmed ? "bg-red-500" : "bg-green-500";
+}

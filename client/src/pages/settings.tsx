@@ -96,7 +96,7 @@ export default function Settings() {
                           {hub.status}
                         </Badge>
                         <Badge variant="outline" className={`border-slate-600 ${
-                          hub.systemArmed ? "text-green-400" : "text-slate-400"
+                          hub.systemArmed ? "text-red-400" : "text-green-400"
                         }`}>
                           {hub.systemArmed ? "Armed" : "Disarmed"}
                         </Badge>

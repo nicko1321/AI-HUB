@@ -125,8 +125,8 @@ export default function Dashboard() {
                 disabled={armHub.isPending || disarmHub.isPending || selectedHub.status === "offline"}
                 className={`${
                   selectedHub.systemArmed
-                    ? "bg-green-500 hover:bg-green-600"
-                    : "bg-red-500 hover:bg-red-600"
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-green-500 hover:bg-green-600"
                 } text-white font-medium transition-colors`}
               >
                 {selectedHub.systemArmed ? (
