@@ -1,8 +1,8 @@
-# Alert360 Video Shield - AI Hub Monitor
+# Alert360 Video Shield - Video Shield Hub
 
 ## Overview
 
-Alert360 Video Shield is a full-stack web application for managing security systems with multiple Jetson Orin AI hubs, cameras, events, and speakers. The application provides advanced AI-powered video monitoring with license plate detection, behavioral analysis, weapon detection, and comprehensive security management capabilities.
+Alert360 Video Shield is a full-stack web application for managing security systems with multiple Jetson Orin Video Shield Hubs, cameras, events, and speakers. The application provides advanced AI-powered video monitoring with license plate detection, behavioral analysis, weapon detection, and comprehensive security management capabilities.
 
 ## System Architecture
 
