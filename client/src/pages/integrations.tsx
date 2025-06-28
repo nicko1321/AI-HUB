@@ -134,7 +134,7 @@ export default function Integrations() {
                     <div>
                       <CardTitle>CHeKT Platform Integration</CardTitle>
                       <CardDescription>
-                        Connect with CHeKT's security management platform for enhanced monitoring and response. Requires both server IP address and API key for authentication.
+                        Connect with CHeKT's security management platform for enhanced monitoring and response. Requires both bridge IP address and API key for authentication.
                       </CardDescription>
                     </div>
                   </div>
@@ -145,7 +145,7 @@ export default function Integrations() {
                 {connectionStatus === "disconnected" && (
                   <div className="space-y-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="chekt-ip-address">CHeKT Server IP Address</Label>
+                      <Label htmlFor="chekt-ip-address">CHeKT Bridge IP Address</Label>
                       <Input
                         id="chekt-ip-address"
                         type="text"
