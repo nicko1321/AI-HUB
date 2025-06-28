@@ -87,13 +87,18 @@ class DataStore {
         id: 1, 
         hubId: 1, 
         cameraId: 2, 
-        type: "motion", 
+        type: "person_detection", 
         severity: "medium", 
-        title: "Motion Detected", 
-        description: "Motion detected in lobby area", 
+        title: "Unauthorized Person Detected", 
+        description: "Person detected in restricted area after hours", 
         timestamp: new Date(Date.now() - 2 * 60 * 1000), 
         acknowledged: false, 
-        metadata: { confidence: 0.85 },
+        metadata: { 
+          confidence: 0.92,
+          person_count: 1,
+          location: "restricted_zone",
+          alert_reason: "after_hours_access"
+        },
         licensePlate: null,
         licensePlateThumbnail: null,
         licensePlateConfidence: null
@@ -147,21 +152,67 @@ class DataStore {
         id: 5,
         hubId: 2,
         cameraId: 4,
-        type: "license_plate",
-        severity: "high",
-        title: "Unknown License Plate",
-        description: "Unregistered license plate XYZ-9876 detected in parking area",
+        type: "weapon_detection",
+        severity: "critical",
+        title: "Weapon Detected",
+        description: "Potential weapon detected in main entrance area",
         timestamp: new Date(Date.now() - 30 * 60 * 1000),
         acknowledged: false,
-        metadata: { vehicle_type: "truck", color: "white", alert_reason: "unregistered" },
-        licensePlate: "XYZ-9876",
+        metadata: { 
+          weapon_type: "handgun",
+          confidence: 0.94,
+          person_count: 1,
+          alert_reason: "security_threat"
+        },
+        licensePlate: null,
+        licensePlateThumbnail: null,
+        licensePlateConfidence: null
+      },
+      {
+        id: 6,
+        hubId: 1,
+        cameraId: 1,
+        type: "license_plate",
+        severity: "critical",
+        title: "Watch List Vehicle Detected",
+        description: "Vehicle on stolen watch list detected: ABC-1234",
+        timestamp: new Date(Date.now() - 45 * 60 * 1000),
+        acknowledged: false,
+        metadata: { 
+          vehicle_type: "sedan",
+          color: "black",
+          alert_reason: "stolen_vehicle",
+          case_number: "CASE-2024-001"
+        },
+        licensePlate: "ABC-1234",
         licensePlateThumbnail: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/2gA",
-        licensePlateConfidence: 0.88
+        licensePlateConfidence: 0.96
+      },
+      {
+        id: 7,
+        hubId: 3,
+        cameraId: 5,
+        type: "suspicious_behavior",
+        severity: "high",
+        title: "Loitering Detected",
+        description: "Person loitering near emergency exit for extended period",
+        timestamp: new Date(Date.now() - 75 * 60 * 1000),
+        acknowledged: false,
+        metadata: { 
+          behavior_type: "loitering",
+          duration_minutes: 15,
+          location: "emergency_exit",
+          person_count: 1,
+          confidence: 0.89
+        },
+        licensePlate: null,
+        licensePlateThumbnail: null,
+        licensePlateConfidence: null
       }
     ];
 
     sampleEvents.forEach(event => this.events.set(event.id, event));
-    this.currentId.events = 6;
+    this.currentId.events = 8;
 
     // Create sample speakers
     const sampleSpeakers: Speaker[] = [
@@ -206,6 +257,53 @@ class DataStore {
 
     sampleTriggers.forEach(trigger => this.aiTriggers.set(trigger.id, trigger));
     this.currentId.aiTriggers = 3;
+
+    // Create sample watch list entries
+    const sampleWatchList: WatchListEntry[] = [
+      {
+        id: 1,
+        licensePlate: "ABC-1234",
+        reason: "stolen",
+        description: "Black sedan reported stolen from downtown area",
+        severity: "critical",
+        addedBy: "Officer Johnson",
+        isActive: true,
+        vehicleDetails: JSON.stringify({
+          make: "Honda",
+          model: "Civic",
+          year: "2020",
+          color: "Black"
+        }),
+        caseNumber: "CASE-2024-001",
+        contactInfo: "Detective Smith - ext. 4455",
+        expiresAt: null,
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: 2,
+        licensePlate: "XYZ-9876",
+        reason: "suspect",
+        description: "Vehicle of interest in armed robbery investigation",
+        severity: "high",
+        addedBy: "Detective Williams",
+        isActive: true,
+        vehicleDetails: JSON.stringify({
+          make: "Ford",
+          model: "F-150",
+          year: "2019",
+          color: "White"
+        }),
+        caseNumber: "CASE-2024-025",
+        contactInfo: "Detective Williams - ext. 3322",
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+      }
+    ];
+
+    sampleWatchList.forEach(entry => this.watchList.set(entry.id, entry));
+    this.currentId.watchList = 3;
   }
 
   // Hub operations
