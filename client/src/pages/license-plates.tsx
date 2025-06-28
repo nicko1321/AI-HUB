@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Car, Shield, AlertTriangle, Download, Filter } from "lucide-react";
+import { Search, Car, Shield, AlertTriangle, Download, Filter, Clock, Plus } from "lucide-react";
 import { formatTimestamp, getSeverityColor } from "@/lib/utils";
 import { useHubs, useEvents } from "@/hooks/use-hub-data";
 import { HubContext } from "@/components/hub-selector";
@@ -52,11 +52,11 @@ export default function LicensePlates() {
     return matchesSearch && matchesSeverity && matchesTime;
   });
 
-  // Get unique license plates for summary
-  const uniquePlates = Array.from(new Set(licensePlateEvents.map(e => e.licensePlate).filter((plate): plate is string => plate !== null)));
-  const unknownPlates = licensePlateEvents.filter(e => 
-    e.metadata && typeof e.metadata === 'object' && 'alert_reason' in e.metadata
-  );
+  // Get summary stats
+  const totalDetections = licensePlateEvents.length;
+  const recentDetections = licensePlateEvents.filter(e => 
+    new Date(e.timestamp) > new Date(Date.now() - 24 * 60 * 60 * 1000)
+  ).length;
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
@@ -124,26 +124,26 @@ export default function LicensePlates() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unique Plates</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Recent (24h)</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{uniquePlates.length}</div>
+            <div className="text-2xl font-bold">{recentDetections}</div>
             <p className="text-xs text-muted-foreground">
-              Distinct license plates
+              Last 24 hours
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unknown Plates</CardTitle>
+            <CardTitle className="text-sm font-medium">Watch List</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{unknownPlates.length}</div>
+            <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">
-              Unregistered vehicles
+              Active alerts
             </p>
           </CardContent>
         </Card>
@@ -168,8 +168,16 @@ export default function LicensePlates() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
+      {/* Main Content with Tabs */}
+      <Tabs defaultValue="detections" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="detections">License Plate Detections</TabsTrigger>
+          <TabsTrigger value="watchlist">Watch List</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="detections" className="space-y-6">
+          {/* Filters */}
+          <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="w-5 h-5" />
@@ -304,6 +312,37 @@ export default function LicensePlates() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="watchlist" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Vehicle Watch List
+                  </CardTitle>
+                  <CardDescription>
+                    Manage stolen vehicles and vehicles of interest
+                  </CardDescription>
+                </div>
+                <Button className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add to Watch List
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-lg font-medium mb-2">No Watch List Entries</h3>
+                <p>Add vehicles to your watch list to automatically flag license plate detections.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

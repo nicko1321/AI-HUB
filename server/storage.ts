@@ -3,7 +3,8 @@ import {
   type Camera, type InsertCamera,
   type Event, type InsertEvent,
   type Speaker, type InsertSpeaker,
-  type AITrigger, type InsertAITrigger
+  type AITrigger, type InsertAITrigger,
+  type WatchListEntry, type InsertWatchListEntry
 } from "@shared/schema";
 
 // Simplified in-memory data store
@@ -13,7 +14,8 @@ class DataStore {
   public events: Map<number, Event> = new Map();
   public speakers: Map<number, Speaker> = new Map();
   public aiTriggers: Map<number, AITrigger> = new Map();
-  private currentId = { hubs: 1, cameras: 1, events: 1, speakers: 1, aiTriggers: 1 };
+  public watchList: Map<number, WatchListEntry> = new Map();
+  private currentId = { hubs: 1, cameras: 1, events: 1, speakers: 1, aiTriggers: 1, watchList: 1 };
 
   constructor() {
     this.hubs = new Map();
@@ -21,7 +23,8 @@ class DataStore {
     this.events = new Map();
     this.speakers = new Map();
     this.aiTriggers = new Map();
-    this.currentId = { hubs: 1, cameras: 1, events: 1, speakers: 1, aiTriggers: 1 };
+    this.watchList = new Map();
+    this.currentId = { hubs: 1, cameras: 1, events: 1, speakers: 1, aiTriggers: 1, watchList: 1 };
     
     // Initialize with sample data
     this.initializeSampleData();
@@ -413,6 +416,72 @@ class DataStore {
 
   async deleteAITrigger(id: number): Promise<boolean> {
     return this.aiTriggers.delete(id);
+  }
+
+  // Watch List operations
+  async getWatchList(): Promise<WatchListEntry[]> {
+    return Array.from(this.watchList.values())
+      .filter(entry => entry.isActive && (!entry.expiresAt || entry.expiresAt > new Date()))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getWatchListEntry(id: number): Promise<WatchListEntry | undefined> {
+    return this.watchList.get(id);
+  }
+
+  async createWatchListEntry(entry: InsertWatchListEntry): Promise<WatchListEntry> {
+    const id = this.currentId.watchList++;
+    const newEntry: WatchListEntry = {
+      id,
+      licensePlate: entry.licensePlate.toUpperCase(),
+      reason: entry.reason,
+      description: entry.description ?? null,
+      severity: entry.severity ?? "medium",
+      addedBy: entry.addedBy,
+      isActive: entry.isActive ?? true,
+      vehicleDetails: entry.vehicleDetails ?? null,
+      caseNumber: entry.caseNumber ?? null,
+      contactInfo: entry.contactInfo ?? null,
+      expiresAt: entry.expiresAt ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.watchList.set(id, newEntry);
+    return newEntry;
+  }
+
+  async updateWatchListEntry(id: number, updates: Partial<WatchListEntry>): Promise<WatchListEntry | undefined> {
+    const entry = this.watchList.get(id);
+    if (!entry) return undefined;
+
+    const updatedEntry = { 
+      ...entry, 
+      ...updates, 
+      updatedAt: new Date() 
+    };
+    this.watchList.set(id, updatedEntry);
+    return updatedEntry;
+  }
+
+  async deleteWatchListEntry(id: number): Promise<boolean> {
+    return this.watchList.delete(id);
+  }
+
+  async checkLicensePlateWatch(licensePlate: string): Promise<WatchListEntry | null> {
+    const normalizedPlate = licensePlate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    
+    for (const entry of Array.from(this.watchList.values())) {
+      if (!entry.isActive || (entry.expiresAt && entry.expiresAt < new Date())) {
+        continue;
+      }
+      
+      const entryPlate = entry.licensePlate.replace(/[^A-Z0-9]/g, '');
+      if (entryPlate === normalizedPlate) {
+        return entry;
+      }
+    }
+    
+    return null;
   }
 }
 

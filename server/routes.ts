@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertHubSchema, insertCameraSchema, insertEventSchema, insertSpeakerSchema, insertAITriggerSchema } from "@shared/schema";
+import { insertHubSchema, insertCameraSchema, insertEventSchema, insertSpeakerSchema, insertAITriggerSchema, insertWatchListSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -222,6 +222,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedHub);
     } catch (error) {
       res.status(500).json({ message: "Failed to disarm hub" });
+    }
+  });
+
+  // Watch List routes
+  app.get("/api/watchlist", async (req, res) => {
+    try {
+      const watchList = await storage.getWatchList();
+      res.json(watchList);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch watch list" });
+    }
+  });
+
+  app.post("/api/watchlist", async (req, res) => {
+    try {
+      const validatedData = insertWatchListSchema.parse(req.body);
+      const newEntry = await storage.createWatchListEntry(validatedData);
+      res.status(201).json(newEntry);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create watch list entry" });
+      }
+    }
+  });
+
+  app.put("/api/watchlist/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const updatedEntry = await storage.updateWatchListEntry(id, updates);
+      
+      if (!updatedEntry) {
+        res.status(404).json({ message: "Watch list entry not found" });
+        return;
+      }
+      
+      res.json(updatedEntry);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update watch list entry" });
+    }
+  });
+
+  app.delete("/api/watchlist/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteWatchListEntry(id);
+      
+      if (!deleted) {
+        res.status(404).json({ message: "Watch list entry not found" });
+        return;
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete watch list entry" });
+    }
+  });
+
+  app.post("/api/watchlist/check", async (req, res) => {
+    try {
+      const { licensePlate } = req.body;
+      if (!licensePlate) {
+        res.status(400).json({ message: "License plate is required" });
+        return;
+      }
+      
+      const match = await storage.checkLicensePlateWatch(licensePlate);
+      res.json({ match });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check license plate" });
     }
   });
 
