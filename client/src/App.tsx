@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { HubProvider } from "@/components/hub-selector";
 import Sidebar from "@/components/sidebar";
 import Dashboard from "@/pages/dashboard";
+import MonitoringPortal from "@/pages/monitoring-portal";
 import VideoWall from "@/pages/video-wall";
 import Events from "@/pages/events";
 import LicensePlates from "@/pages/license-plates";
@@ -32,6 +33,7 @@ function Router() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <Switch>
             <Route path="/" component={Dashboard} />
+            <Route path="/monitoring-portal" component={MonitoringPortal} />
             <Route path="/video-wall" component={VideoWall} />
             <Route path="/events" component={Events} />
             <Route path="/license-plates" component={LicensePlates} />
