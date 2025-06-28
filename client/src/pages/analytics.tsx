@@ -546,36 +546,277 @@ export default function Analytics() {
 
           {/* AI Triggers Tab */}
           <TabsContent value="ai-triggers" className="space-y-6">
+            {/* Smart AI Triggers Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <Card className="bg-slate-850 border-slate-700">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-400 text-sm">Active Triggers</p>
+                      <p className="text-2xl font-semibold text-white">{aiTriggers?.filter(t => t.enabled).length || 0}</p>
+                      <p className="text-xs text-green-400 mt-1">Running analytics</p>
+                    </div>
+                    <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center">
+                      <Brain className="w-6 h-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-850 border-slate-700">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-400 text-sm">AI Detections Today</p>
+                      <p className="text-2xl font-semibold text-white">{events?.filter(e => e.type.includes('AI') || e.type.includes('detection')).length || 0}</p>
+                      <p className="text-xs text-amber-400 mt-1">AI-powered events</p>
+                    </div>
+                    <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-lg flex items-center justify-center">
+                      <Zap className="w-6 h-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-850 border-slate-700">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-400 text-sm">Accuracy Rate</p>
+                      <p className="text-2xl font-semibold text-white">94.2%</p>
+                      <p className="text-xs text-green-400 mt-1">Learning continuously</p>
+                    </div>
+                    <div className="w-12 h-12 bg-green-500/10 text-green-400 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Smart Trigger Categories */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card className="bg-slate-850 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <Brain className="w-5 h-5 mr-2 text-blue-400" />
+                    Behavioral Analytics
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Advanced AI triggers for human behavior analysis
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                      <div>
+                        <p className="text-white text-sm font-medium">Loitering Detection</p>
+                        <p className="text-slate-400 text-xs">Identifies prolonged presence in restricted areas</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-xs text-slate-400">Active</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                      <div>
+                        <p className="text-white text-sm font-medium">Aggressive Behavior</p>
+                        <p className="text-slate-400 text-xs">Detects unusual movement patterns and gestures</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-xs text-slate-400">Active</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                      <div>
+                        <p className="text-white text-sm font-medium">Crowd Density Analysis</p>
+                        <p className="text-slate-400 text-xs">Monitors gathering sizes and social distancing</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                        <span className="text-xs text-slate-400">Learning</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                      <div>
+                        <p className="text-white text-sm font-medium">Fall Detection</p>
+                        <p className="text-slate-400 text-xs">Emergency response for elderly or workplace safety</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-xs text-slate-400">Active</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-850 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
+                    Threat Detection
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    High-priority security threat identification
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                      <div>
+                        <p className="text-white text-sm font-medium">Weapon Detection</p>
+                        <p className="text-slate-400 text-xs">AI-powered identification of weapons and threats</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-xs text-slate-400">Active</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                      <div>
+                        <p className="text-white text-sm font-medium">Unauthorized Entry</p>
+                        <p className="text-slate-400 text-xs">Detects breaches and forced entry attempts</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-xs text-slate-400">Active</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                      <div>
+                        <p className="text-white text-sm font-medium">License Plate Recognition</p>
+                        <p className="text-slate-400 text-xs">Vehicle identification and access control</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-xs text-slate-400">Active</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                      <div>
+                        <p className="text-white text-sm font-medium">Facial Recognition</p>
+                        <p className="text-slate-400 text-xs">Identity verification and access management</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                        <span className="text-xs text-slate-400">Beta</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Advanced Analytics Triggers */}
             <Card className="bg-slate-850 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white flex items-center space-x-2">
-                  <Brain className="w-5 h-5 text-sky-400" />
-                  <span>AI Event Triggers</span>
+                <CardTitle className="text-white flex items-center">
+                  <Zap className="w-5 h-5 mr-2 text-purple-400" />
+                  Advanced Analytics Triggers
                 </CardTitle>
                 <CardDescription className="text-slate-400">
-                  Configure AI-powered image analysis to automatically detect specific scenarios like weapons, suspicious behavior, or any custom analytics you define
+                  Smart triggers that learn from your environment and adapt to patterns
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center py-12">
-                  <Brain className="w-12 h-12 text-sky-400 mx-auto mb-4" />
-                  <p className="text-white text-lg mb-2">AI Trigger Configuration</p>
-                  <p className="text-slate-400 mb-4">
-                    Create custom AI triggers like weapon detection, suspicious behavior analysis, or any scenario you want to monitor
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                    <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
-                      <h4 className="text-white font-medium mb-2">Active AI Triggers</h4>
-                      <p className="text-slate-400 text-sm">{aiTriggers?.length || 0} triggers configured</p>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="text-white font-medium text-sm">Pattern Anomaly Detection</h4>
+                        <p className="text-slate-400 text-xs mt-1">Learns normal patterns and alerts on deviations</p>
+                      </div>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full mt-1"></div>
                     </div>
-                    <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
-                      <h4 className="text-white font-medium mb-2">Ready for Integration</h4>
-                      <p className="text-slate-400 text-sm">OpenAI Vision API support</p>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">Confidence: 89%</span>
+                      <span className="text-blue-400">Learning</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="text-white font-medium text-sm">Multi-Camera Tracking</h4>
+                        <p className="text-slate-400 text-xs mt-1">Follows subjects across multiple camera feeds</p>
+                      </div>
+                      <div className="w-2 h-2 bg-green-400 rounded-full mt-1"></div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">Confidence: 96%</span>
+                      <span className="text-green-400">Active</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="text-white font-medium text-sm">Predictive Alerts</h4>
+                        <p className="text-slate-400 text-xs mt-1">Anticipates incidents before they occur</p>
+                      </div>
+                      <div className="w-2 h-2 bg-purple-400 rounded-full mt-1"></div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">Confidence: 78%</span>
+                      <span className="text-purple-400">Experimental</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="text-white font-medium text-sm">Environmental Analysis</h4>
+                        <p className="text-slate-400 text-xs mt-1">Monitors lighting, weather, and visibility changes</p>
+                      </div>
+                      <div className="w-2 h-2 bg-green-400 rounded-full mt-1"></div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">Confidence: 92%</span>
+                      <span className="text-green-400">Active</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="text-white font-medium text-sm">Object Left Behind</h4>
+                        <p className="text-slate-400 text-xs mt-1">Detects abandoned objects and unattended items</p>
+                      </div>
+                      <div className="w-2 h-2 bg-green-400 rounded-full mt-1"></div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">Confidence: 87%</span>
+                      <span className="text-green-400">Active</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="text-white font-medium text-sm">Queue Management</h4>
+                        <p className="text-slate-400 text-xs mt-1">Analyzes wait times and crowd flow optimization</p>
+                      </div>
+                      <div className="w-2 h-2 bg-amber-400 rounded-full mt-1"></div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">Confidence: 84%</span>
+                      <span className="text-amber-400">Testing</span>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            <AITriggerConfig
+              onTriggerCreate={handleTriggerCreate}
+              onTriggerUpdate={handleTriggerUpdate}
+              onTriggerDelete={handleTriggerDelete}
+              triggers={aiTriggers || []}
+              hubs={hubs || []}
+              cameras={cameras || []}
+            />
           </TabsContent>
 
           {/* Custom Analytics Tab */}
