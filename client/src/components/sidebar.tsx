@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Video, Grid3x3, List, Settings, BarChart3, Shield } from "lucide-react";
 import HubSelector from "./hub-selector";
 import { cn } from "@/lib/utils";
+import logoUrl from "@assets/alert360_logo.png_1751080963078.png";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Grid3x3 },
@@ -20,7 +21,7 @@ export default function Sidebar() {
       <div className="p-6 border-b border-slate-700">
         <div className="flex items-center space-x-3">
           <img 
-            src="/attached_assets/alert360_logo.png_1751080963078.png" 
+            src={logoUrl} 
             alt="Alert360 Video Shield" 
             className="h-8 w-auto"
           />
