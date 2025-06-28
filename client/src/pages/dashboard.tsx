@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { useHubs, useCameras, useEvents, useSpeakers, useArmHub, useDisarmHub, useUpdateSpeaker } from "@/hooks/use-hub-data";
 import { HubContext } from "@/components/hub-selector";
 import StatusCard from "@/components/status-card";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const { selectedHubId } = useContext(HubContext);
+  const [securityLevel, setSecurityLevel] = React.useState<"Normal" | "VIP">("Normal");
   const { data: hubs, isLoading: hubsLoading } = useHubs();
   const { data: cameras, isLoading: camerasLoading } = useCameras(selectedHubId || undefined);
   const { data: events, isLoading: eventsLoading } = useEvents(selectedHubId || undefined, 5);
@@ -126,9 +127,46 @@ export default function Dashboard() {
           
           <div className="flex items-center space-x-6">
             {/* Security Level */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Security Level:</span>
-              <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">Medium</span>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant={securityLevel === "Normal" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setSecurityLevel("Normal");
+                    toast({
+                      title: "Security Level Changed",
+                      description: "Security level set to Normal - Standard monitoring protocols active",
+                    });
+                  }}
+                  className={`text-xs font-medium ${
+                    securityLevel === "Normal" 
+                      ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  Normal
+                </Button>
+                <Button
+                  variant={securityLevel === "VIP" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setSecurityLevel("VIP");
+                    toast({
+                      title: "VIP Security Level Active",
+                      description: "Enhanced monitoring protocols and priority response activated",
+                    });
+                  }}
+                  className={`text-xs font-medium ${
+                    securityLevel === "VIP" 
+                      ? "bg-gradient-to-r from-purple-600 to-amber-600 hover:from-purple-700 hover:to-amber-700 text-white" 
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  VIP
+                </Button>
+              </div>
             </div>
             
             {/* System Status */}
