@@ -19,10 +19,12 @@ export default function Sidebar() {
       {/* Logo/Brand */}
       <div className="p-6 border-b border-slate-700">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
-            <Video className="text-white text-sm w-4 h-4" />
-          </div>
-          <h1 className="text-xl font-semibold text-white">AI Hub Monitor</h1>
+          <img 
+            src="/attached_assets/alert360_logo.png_1751080963078.png" 
+            alt="Alert360 Video Shield" 
+            className="h-8 w-auto"
+          />
+          <h1 className="text-xl font-semibold text-white">Alert360 Video Shield</h1>
         </div>
       </div>
 

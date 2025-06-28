@@ -1,8 +1,8 @@
-# AI Hub Monitor - Replit Project Guide
+# Alert360 Video Shield - AI Hub Monitor
 
 ## Overview
 
-AI Hub Monitor is a full-stack web application for managing security systems with multiple hubs, cameras, events, and speakers. The application provides a real-time dashboard for monitoring security infrastructure, viewing camera feeds, managing events, and controlling audio systems.
+Alert360 Video Shield is a full-stack web application for managing security systems with multiple Jetson Orin AI hubs, cameras, events, and speakers. The application provides advanced AI-powered video monitoring with license plate detection, behavioral analysis, weapon detection, and comprehensive security management capabilities.
 
 ## System Architecture
 
