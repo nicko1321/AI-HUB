@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Video, Grid3x3, List, Settings, BarChart3, Shield } from "lucide-react";
+import { Video, Grid3x3, List, Settings, BarChart3, Shield, Car } from "lucide-react";
 import HubSelector from "./hub-selector";
 import { cn } from "@/lib/utils";
 import logoUrl from "@assets/alert360_logo.png_1751080963078.png";
@@ -8,6 +8,7 @@ const navigation = [
   { name: "Dashboard", href: "/", icon: Grid3x3 },
   { name: "Video Wall", href: "/video-wall", icon: Video },
   { name: "Events", href: "/events", icon: List },
+  { name: "License Plates", href: "/license-plates", icon: Car },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Integrations", href: "/integrations", icon: Shield },
   { name: "Settings", href: "/settings", icon: Settings },

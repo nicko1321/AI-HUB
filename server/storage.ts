@@ -80,13 +80,85 @@ class DataStore {
 
     // Create sample events
     const sampleEvents: Event[] = [
-      { id: 1, hubId: 1, cameraId: 2, type: "motion", severity: "medium", title: "Motion Detected", description: "Motion detected in lobby area", timestamp: new Date(Date.now() - 2 * 60 * 1000), acknowledged: false, metadata: { confidence: 0.85 } },
-      { id: 2, hubId: 1, cameraId: null, type: "system", severity: "low", title: "System Armed", description: "Security system armed by admin user", timestamp: new Date(Date.now() - 15 * 60 * 1000), acknowledged: true, metadata: { user: "admin" } },
-      { id: 3, hubId: 3, cameraId: 6, type: "connection", severity: "high", title: "Connection Lost", description: "Camera connection lost", timestamp: new Date(Date.now() - 60 * 60 * 1000), acknowledged: false, metadata: { lastPing: "2024-01-25T14:30:00Z" } },
+      { 
+        id: 1, 
+        hubId: 1, 
+        cameraId: 2, 
+        type: "motion", 
+        severity: "medium", 
+        title: "Motion Detected", 
+        description: "Motion detected in lobby area", 
+        timestamp: new Date(Date.now() - 2 * 60 * 1000), 
+        acknowledged: false, 
+        metadata: { confidence: 0.85 },
+        licensePlate: null,
+        licensePlateThumbnail: null,
+        licensePlateConfidence: null
+      },
+      { 
+        id: 2, 
+        hubId: 1, 
+        cameraId: null, 
+        type: "system", 
+        severity: "low", 
+        title: "System Armed", 
+        description: "Security system armed by admin user", 
+        timestamp: new Date(Date.now() - 15 * 60 * 1000), 
+        acknowledged: true, 
+        metadata: { user: "admin" },
+        licensePlate: null,
+        licensePlateThumbnail: null,
+        licensePlateConfidence: null
+      },
+      { 
+        id: 3, 
+        hubId: 3, 
+        cameraId: 6, 
+        type: "connection", 
+        severity: "high", 
+        title: "Connection Lost", 
+        description: "Camera connection lost", 
+        timestamp: new Date(Date.now() - 60 * 60 * 1000), 
+        acknowledged: false, 
+        metadata: { lastPing: "2024-01-25T14:30:00Z" },
+        licensePlate: null,
+        licensePlateThumbnail: null,
+        licensePlateConfidence: null
+      },
+      {
+        id: 4,
+        hubId: 1,
+        cameraId: 1,
+        type: "license_plate",
+        severity: "medium",
+        title: "License Plate Detected",
+        description: "License plate ABC-1234 detected at main entrance",
+        timestamp: new Date(Date.now() - 5 * 60 * 1000),
+        acknowledged: false,
+        metadata: { vehicle_type: "sedan", color: "blue" },
+        licensePlate: "ABC-1234",
+        licensePlateThumbnail: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/2gA",
+        licensePlateConfidence: 0.92
+      },
+      {
+        id: 5,
+        hubId: 2,
+        cameraId: 4,
+        type: "license_plate",
+        severity: "high",
+        title: "Unknown License Plate",
+        description: "Unregistered license plate XYZ-9876 detected in parking area",
+        timestamp: new Date(Date.now() - 30 * 60 * 1000),
+        acknowledged: false,
+        metadata: { vehicle_type: "truck", color: "white", alert_reason: "unregistered" },
+        licensePlate: "XYZ-9876",
+        licensePlateThumbnail: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/2gA",
+        licensePlateConfidence: 0.88
+      }
     ];
 
     sampleEvents.forEach(event => this.events.set(event.id, event));
-    this.currentId.events = 4;
+    this.currentId.events = 6;
 
     // Create sample speakers
     const sampleSpeakers: Speaker[] = [
@@ -229,13 +301,19 @@ class DataStore {
   async createEvent(event: InsertEvent): Promise<Event> {
     const id = this.currentId.events++;
     const newEvent: Event = { 
-      ...event, 
       id, 
+      hubId: event.hubId,
+      cameraId: event.cameraId ?? null,
+      type: event.type,
+      severity: event.severity,
+      title: event.title,
+      description: event.description ?? null,
       timestamp: new Date(),
-      cameraId: event.cameraId || null,
-      description: event.description || null,
-      acknowledged: event.acknowledged || false,
-      metadata: event.metadata || null
+      acknowledged: event.acknowledged ?? false,
+      metadata: event.metadata ?? null,
+      licensePlate: event.licensePlate ?? null,
+      licensePlateThumbnail: event.licensePlateThumbnail ?? null,
+      licensePlateConfidence: event.licensePlateConfidence ?? null
     };
     this.events.set(id, newEvent);
     return newEvent;

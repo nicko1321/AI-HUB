@@ -9,6 +9,7 @@ import Sidebar from "@/components/sidebar";
 import Dashboard from "@/pages/dashboard";
 import VideoWall from "@/pages/video-wall";
 import Events from "@/pages/events";
+import LicensePlates from "@/pages/license-plates";
 import Analytics from "@/pages/analytics";
 import Integrations from "@/pages/integrations";
 import Settings from "@/pages/settings";
@@ -33,6 +34,7 @@ function Router() {
             <Route path="/" component={Dashboard} />
             <Route path="/video-wall" component={VideoWall} />
             <Route path="/events" component={Events} />
+            <Route path="/license-plates" component={LicensePlates} />
             <Route path="/analytics" component={Analytics} />
             <Route path="/integrations" component={Integrations} />
             <Route path="/settings" component={Settings} />

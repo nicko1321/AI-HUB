@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { data } from "./data";
+import { storage } from "./storage";
 import { insertHubSchema, insertCameraSchema, insertEventSchema, insertSpeakerSchema, insertAITriggerSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -8,7 +8,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Hub routes
   app.get("/api/hubs", async (req, res) => {
     try {
-      const hubs = Array.from(data.hubs.values());
+      const hubs = await storage.getHubs();
       res.json(hubs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch hubs" });
@@ -18,7 +18,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/hubs/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const hub = data.hubs.get(id);
+      const hub = await storage.getHub(id);
       if (!hub) {
         return res.status(404).json({ message: "Hub not found" });
       }
@@ -28,90 +28,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/hubs", async (req, res) => {
-    try {
-      const validatedData = insertHubSchema.parse(req.body);
-      const hub = await storage.createHub(validatedData);
-      res.status(201).json(hub);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create hub" });
-    }
-  });
-
-  app.patch("/api/hubs/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const hub = await storage.updateHub(id, req.body);
-      if (!hub) {
-        return res.status(404).json({ message: "Hub not found" });
-      }
-      res.json(hub);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update hub" });
-    }
-  });
-
-  app.post("/api/hubs/:id/arm", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const hub = await storage.updateHub(id, { systemArmed: true });
-      if (!hub) {
-        return res.status(404).json({ message: "Hub not found" });
-      }
-      
-      // Create event for system armed
-      await storage.createEvent({
-        hubId: id,
-        type: "system",
-        severity: "low",
-        title: "System Armed",
-        description: `Security system armed for ${hub.name}`,
-        acknowledged: false,
-        metadata: { action: "arm", timestamp: new Date() }
-      });
-      
-      res.json(hub);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to arm system" });
-    }
-  });
-
-  app.post("/api/hubs/:id/disarm", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const hub = await storage.updateHub(id, { systemArmed: false });
-      if (!hub) {
-        return res.status(404).json({ message: "Hub not found" });
-      }
-      
-      // Create event for system disarmed
-      await storage.createEvent({
-        hubId: id,
-        type: "system",
-        severity: "low",
-        title: "System Disarmed",
-        description: `Security system disarmed for ${hub.name}`,
-        acknowledged: false,
-        metadata: { action: "disarm", timestamp: new Date() }
-      });
-      
-      res.json(hub);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to disarm system" });
-    }
-  });
-
   // Camera routes
   app.get("/api/cameras", async (req, res) => {
     try {
       const hubId = req.query.hubId ? parseInt(req.query.hubId as string) : undefined;
-      const cameras = hubId 
-        ? await storage.getCamerasByHub(hubId)
-        : await storage.getCameras();
-      res.json(cameras);
+      if (hubId) {
+        const cameras = await storage.getCamerasByHub(hubId);
+        res.json(cameras);
+      } else {
+        const cameras = await storage.getCameras();
+        res.json(cameras);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch cameras" });
     }
@@ -130,48 +57,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/cameras", async (req, res) => {
-    try {
-      const validatedData = insertCameraSchema.parse(req.body);
-      const camera = await storage.createCamera(validatedData);
-      res.status(201).json(camera);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create camera" });
-    }
-  });
-
-  app.patch("/api/cameras/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const camera = await storage.updateCamera(id, req.body);
-      if (!camera) {
-        return res.status(404).json({ message: "Camera not found" });
-      }
-      res.json(camera);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update camera" });
-    }
-  });
-
   // Event routes
   app.get("/api/events", async (req, res) => {
     try {
       const hubId = req.query.hubId ? parseInt(req.query.hubId as string) : undefined;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       
-      let events;
       if (hubId) {
-        events = await storage.getEventsByHub(hubId);
+        const events = await storage.getEventsByHub(hubId);
+        res.json(events.slice(0, limit));
       } else if (limit) {
-        events = await storage.getRecentEvents(limit);
+        const events = await storage.getRecentEvents(limit);
+        res.json(events);
       } else {
-        events = await storage.getEvents();
+        const events = await storage.getEvents();
+        res.json(events);
       }
-      
-      res.json(events);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch events" });
     }
@@ -179,14 +80,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/events", async (req, res) => {
     try {
-      const validatedData = insertEventSchema.parse(req.body);
-      const event = await storage.createEvent(validatedData);
+      const eventData = insertEventSchema.parse(req.body);
+      const event = await storage.createEvent(eventData);
       res.status(201).json(event);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+        res.status(400).json({ message: "Invalid event data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create event" });
       }
-      res.status(500).json({ message: "Failed to create event" });
     }
   });
 
@@ -207,10 +109,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/speakers", async (req, res) => {
     try {
       const hubId = req.query.hubId ? parseInt(req.query.hubId as string) : undefined;
-      const speakers = hubId 
-        ? await storage.getSpeakersByHub(hubId)
-        : await storage.getSpeakers();
-      res.json(speakers);
+      if (hubId) {
+        const speakers = await storage.getSpeakersByHub(hubId);
+        res.json(speakers);
+      } else {
+        const speakers = await storage.getSpeakers();
+        res.json(speakers);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch speakers" });
     }
@@ -219,7 +124,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/speakers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const speaker = await storage.updateSpeaker(id, req.body);
+      const updates = req.body;
+      const speaker = await storage.updateSpeaker(id, updates);
       if (!speaker) {
         return res.status(404).json({ message: "Speaker not found" });
       }
@@ -239,36 +145,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/ai-triggers/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const trigger = await storage.getAITrigger(id);
-      if (!trigger) {
-        return res.status(404).json({ message: "AI trigger not found" });
-      }
-      res.json(trigger);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch AI trigger" });
-    }
-  });
-
   app.post("/api/ai-triggers", async (req, res) => {
     try {
-      const validatedData = insertAITriggerSchema.parse(req.body);
-      const trigger = await storage.createAITrigger(validatedData);
+      const triggerData = insertAITriggerSchema.parse(req.body);
+      const trigger = await storage.createAITrigger(triggerData);
       res.status(201).json(trigger);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+        res.status(400).json({ message: "Invalid trigger data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create AI trigger" });
       }
-      res.status(500).json({ message: "Failed to create AI trigger" });
     }
   });
 
   app.patch("/api/ai-triggers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const trigger = await storage.updateAITrigger(id, req.body);
+      const updates = req.body;
+      const trigger = await storage.updateAITrigger(id, updates);
       if (!trigger) {
         return res.status(404).json({ message: "AI trigger not found" });
       }
@@ -281,43 +176,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/ai-triggers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteAITrigger(id);
-      if (!deleted) {
+      const success = await storage.deleteAITrigger(id);
+      if (!success) {
         return res.status(404).json({ message: "AI trigger not found" });
       }
-      res.json({ message: "AI trigger deleted successfully" });
+      res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete AI trigger" });
     }
   });
 
-  // AI Analysis endpoint for processing camera images
-  app.post("/api/ai-triggers/analyze", async (req, res) => {
+  // Hub arm/disarm routes
+  app.post("/api/hubs/:id/arm", async (req, res) => {
     try {
-      const { imageData, triggerId } = req.body;
+      const id = parseInt(req.params.id);
+      const hub = await storage.getHub(id);
+      if (!hub) {
+        return res.status(404).json({ message: "Hub not found" });
+      }
       
-      if (!process.env.OPENAI_API_KEY) {
-        return res.status(500).json({ message: "OpenAI API key not configured" });
-      }
-
-      const trigger = await storage.getAITrigger(triggerId);
-      if (!trigger || !trigger.enabled) {
-        return res.status(404).json({ message: "AI trigger not found or disabled" });
-      }
-
-      // This would integrate with OpenAI Vision API in production
-      // For now, return a mock response for demonstration
-      const analysisResult = {
-        detected: Math.random() > 0.7, // Simulate detection
-        confidence: Math.floor(Math.random() * 100),
-        description: `Analysis using prompt: "${trigger.prompt}"`,
-        triggerId: trigger.id,
-        timestamp: new Date()
-      };
-
-      res.json(analysisResult);
+      const updatedHub = await storage.updateHub(id, { 
+        status: "armed",
+        lastActivity: new Date()
+      });
+      
+      res.json(updatedHub);
     } catch (error) {
-      res.status(500).json({ message: "Failed to analyze image" });
+      res.status(500).json({ message: "Failed to arm hub" });
+    }
+  });
+
+  app.post("/api/hubs/:id/disarm", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const hub = await storage.getHub(id);
+      if (!hub) {
+        return res.status(404).json({ message: "Hub not found" });
+      }
+      
+      const updatedHub = await storage.updateHub(id, { 
+        status: "disarmed",
+        lastActivity: new Date()
+      });
+      
+      res.json(updatedHub);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to disarm hub" });
     }
   });
 
