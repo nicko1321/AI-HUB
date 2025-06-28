@@ -25,7 +25,7 @@ export default function Sidebar() {
             alt="Alert360 Video Shield" 
             className="h-8 w-auto"
           />
-          <h1 className="text-xl font-semibold text-white">Alert360 Video Shield</h1>
+          <h1 className="text-xl font-semibold text-white">Alert 360 Video Shield</h1>
         </div>
       </div>
 
