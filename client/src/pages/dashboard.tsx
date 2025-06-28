@@ -101,57 +101,58 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* Tactical Command Header */}
-      <header className="bg-black border-b border-red-900 px-6 py-3">
+      {/* Modern Dashboard Header */}
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="text-red-400 font-mono text-sm font-bold tracking-wider">TACTICAL OPS CENTER</span>
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="text-slate-900 dark:text-white text-lg font-semibold">Security Dashboard</span>
             </div>
-            <div className="border-l border-slate-600 pl-4">
-              <h2 className="text-xl font-bold text-white font-mono tracking-wide">{selectedHub.name}</h2>
+            <div className="border-l border-slate-200 dark:border-slate-700 pl-6">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{selectedHub.name}</h2>
               <div className="flex items-center space-x-2 mt-1">
                 <div className={`w-2 h-2 rounded-full ${getStatusColor(selectedHub.status)}`} />
-                <span className={`text-xs uppercase font-mono tracking-wider ${
-                  selectedHub.status === "online" ? "text-green-400" : 
-                  selectedHub.status === "offline" ? "text-red-400" : "text-amber-400"
+                <span className={`text-sm font-medium capitalize ${
+                  selectedHub.status === "online" ? "text-green-600 dark:text-green-400" : 
+                  selectedHub.status === "offline" ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"
                 }`}>
                   {selectedHub.status}
                 </span>
+                <span className="text-slate-500 dark:text-slate-400 text-sm">• {selectedHub.location}</span>
               </div>
             </div>
           </div>
           
           <div className="flex items-center space-x-6">
-            {/* Threat Level */}
+            {/* Security Level */}
             <div className="flex items-center space-x-2">
-              <span className="text-xs text-slate-400 font-mono">THREAT LEVEL:</span>
-              <span className="text-amber-400 font-mono font-bold">MEDIUM</span>
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Security Level:</span>
+              <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">Medium</span>
             </div>
             
             {/* System Status */}
-            <div className="flex items-center space-x-3 border border-slate-700 rounded px-3 py-2 bg-slate-900">
-              <span className="text-xs text-slate-300 font-mono">SYSTEM:</span>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">System:</span>
               <Button
                 onClick={handleToggleArm}
                 disabled={armHub.isPending || disarmHub.isPending || selectedHub.status === "offline"}
                 size="sm"
                 className={`${
                   selectedHub.systemArmed
-                    ? "bg-red-600 hover:bg-red-700 border-red-500"
-                    : "bg-green-600 hover:bg-green-700 border-green-500"
-                } text-white font-mono text-xs font-bold tracking-wider border transition-colors`}
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-green-600 hover:bg-green-700"
+                } text-white font-medium`}
               >
                 {selectedHub.systemArmed ? (
                   <>
-                    <Shield className="w-3 h-3 mr-1" />
-                    ARMED
+                    <Shield className="w-4 h-4 mr-2" />
+                    Armed
                   </>
                 ) : (
                   <>
-                    <ShieldOff className="w-3 h-3 mr-1" />
-                    DISARMED
+                    <ShieldOff className="w-4 h-4 mr-2" />
+                    Disarmed
                   </>
                 )}
               </Button>
@@ -159,10 +160,10 @@ export default function Dashboard() {
             
             {/* Time Display */}
             <div className="text-right">
-              <div className="text-green-400 font-mono text-sm font-bold">
+              <div className="text-slate-900 dark:text-white text-sm font-semibold">
                 {new Date().toLocaleTimeString('en-US', { hour12: false })}
               </div>
-              <div className="text-slate-400 font-mono text-xs">
+              <div className="text-slate-500 dark:text-slate-400 text-sm">
                 {new Date().toLocaleDateString('en-US')}
               </div>
             </div>
