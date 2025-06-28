@@ -9,6 +9,7 @@ const navigation = [
   { name: "Video Wall", href: "/video-wall", icon: Video },
   { name: "Events", href: "/events", icon: List },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Integrations", href: "/integrations", icon: Shield },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

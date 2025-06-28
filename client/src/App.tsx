@@ -10,6 +10,7 @@ import Dashboard from "@/pages/dashboard";
 import VideoWall from "@/pages/video-wall";
 import Events from "@/pages/events";
 import Analytics from "@/pages/analytics";
+import Integrations from "@/pages/integrations";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
@@ -33,6 +34,7 @@ function Router() {
             <Route path="/video-wall" component={VideoWall} />
             <Route path="/events" component={Events} />
             <Route path="/analytics" component={Analytics} />
+            <Route path="/integrations" component={Integrations} />
             <Route path="/settings" component={Settings} />
             <Route component={NotFound} />
           </Switch>
