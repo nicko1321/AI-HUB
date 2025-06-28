@@ -85,7 +85,7 @@ export default function Settings() {
                         <div>
                           <h3 className="text-white font-medium">{hub.name}</h3>
                           <p className="text-slate-400 text-sm">{hub.location}</p>
-                          <p className="text-slate-500 text-xs">IP: {hub.ipAddress}</p>
+                          <p className="text-slate-500 text-xs">S/N: {hub.serialNumber}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
@@ -132,8 +132,8 @@ export default function Settings() {
                       <Input className="bg-slate-800 border-slate-600 text-white" placeholder="Enter location" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-white">IP Address</Label>
-                      <Input className="bg-slate-800 border-slate-600 text-white" placeholder="192.168.1.10" />
+                      <Label className="text-white">Serial Number</Label>
+                      <Input className="bg-slate-800 border-slate-600 text-white" placeholder="AO-HUB-001-2024" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-white">Max Cameras</Label>

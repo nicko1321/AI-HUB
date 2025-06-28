@@ -196,8 +196,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const updatedHub = await storage.updateHub(id, { 
-        status: "armed",
-        lastActivity: new Date()
+        systemArmed: true,
+        lastHeartbeat: new Date()
       });
       
       res.json(updatedHub);
@@ -215,8 +215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const updatedHub = await storage.updateHub(id, { 
-        status: "disarmed",
-        lastActivity: new Date()
+        systemArmed: false,
+        lastHeartbeat: new Date()
       });
       
       res.json(updatedHub);

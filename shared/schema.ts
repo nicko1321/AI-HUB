@@ -6,7 +6,7 @@ export const hubs = pgTable("hubs", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   location: text("location").notNull(),
-  ipAddress: text("ip_address").notNull(),
+  serialNumber: text("serial_number").notNull().unique(),
   status: text("status").notNull().default("offline"), // online, offline, error
   systemArmed: boolean("system_armed").notNull().default(false),
   lastHeartbeat: timestamp("last_heartbeat"),

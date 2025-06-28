@@ -105,6 +105,7 @@ Alert 360 Video Shield is a full-stack web application for managing security sys
 
 ```
 Changelog:
+- June 28, 2025. Updated hub management to use serial numbers instead of IP addresses for Jetson Orin devices
 - June 25, 2025. Initial setup
 ```
 
