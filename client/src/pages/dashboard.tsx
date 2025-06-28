@@ -6,7 +6,7 @@ import CameraGrid from "@/components/camera-grid";
 import EventList from "@/components/event-list";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Video, AlertTriangle, Heart, Shield, ShieldOff, Volume2, VolumeX, Expand, Download, FileText, Wrench } from "lucide-react";
+import { Video, AlertTriangle, Heart, Shield, ShieldOff, Volume2, VolumeX, Expand, Download, FileText, Wrench, Clock, Grid, Maximize2, Users } from "lucide-react";
 import { getStatusColor } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -101,209 +101,198 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* Top Bar */}
-      <header className="bg-slate-900 border-b border-slate-700 px-6 py-4">
+      {/* Tactical Command Header */}
+      <header className="bg-black border-b border-red-900 px-6 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h2 className="text-2xl font-semibold text-white">{selectedHub.name} Dashboard</h2>
-            <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${getStatusColor(selectedHub.status)}`} />
-              <span className={`text-sm capitalize ${
-                selectedHub.status === "online" ? "text-green-400" : 
-                selectedHub.status === "offline" ? "text-red-400" : "text-amber-400"
-              }`}>
-                {selectedHub.status}
-              </span>
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-red-400 font-mono text-sm font-bold tracking-wider">TACTICAL OPS CENTER</span>
+            </div>
+            <div className="border-l border-slate-600 pl-4">
+              <h2 className="text-xl font-bold text-white font-mono tracking-wide">{selectedHub.name}</h2>
+              <div className="flex items-center space-x-2 mt-1">
+                <div className={`w-2 h-2 rounded-full ${getStatusColor(selectedHub.status)}`} />
+                <span className={`text-xs uppercase font-mono tracking-wider ${
+                  selectedHub.status === "online" ? "text-green-400" : 
+                  selectedHub.status === "offline" ? "text-red-400" : "text-amber-400"
+                }`}>
+                  {selectedHub.status}
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            {/* System Arm/Disarm */}
-            <div className="flex items-center space-x-3">
-              <span className="text-sm text-slate-300">System Status:</span>
+          
+          <div className="flex items-center space-x-6">
+            {/* Threat Level */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-slate-400 font-mono">THREAT LEVEL:</span>
+              <span className="text-amber-400 font-mono font-bold">MEDIUM</span>
+            </div>
+            
+            {/* System Status */}
+            <div className="flex items-center space-x-3 border border-slate-700 rounded px-3 py-2 bg-slate-900">
+              <span className="text-xs text-slate-300 font-mono">SYSTEM:</span>
               <Button
                 onClick={handleToggleArm}
                 disabled={armHub.isPending || disarmHub.isPending || selectedHub.status === "offline"}
+                size="sm"
                 className={`${
                   selectedHub.systemArmed
-                    ? "bg-red-500 hover:bg-red-600"
-                    : "bg-green-500 hover:bg-green-600"
-                } text-white font-medium transition-colors`}
+                    ? "bg-red-600 hover:bg-red-700 border-red-500"
+                    : "bg-green-600 hover:bg-green-700 border-green-500"
+                } text-white font-mono text-xs font-bold tracking-wider border transition-colors`}
               >
                 {selectedHub.systemArmed ? (
                   <>
-                    <Shield className="w-4 h-4 mr-2" />
-                    Armed
+                    <Shield className="w-3 h-3 mr-1" />
+                    ARMED
                   </>
                 ) : (
                   <>
-                    <ShieldOff className="w-4 h-4 mr-2" />
-                    Disarmed
+                    <ShieldOff className="w-3 h-3 mr-1" />
+                    DISARMED
                   </>
                 )}
               </Button>
             </div>
-            {/* User Profile */}
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center">
-                <span className="text-slate-300 text-sm font-medium">A</span>
+            
+            {/* Time Display */}
+            <div className="text-right">
+              <div className="text-green-400 font-mono text-sm font-bold">
+                {new Date().toLocaleTimeString('en-US', { hour12: false })}
               </div>
-              <span className="text-sm text-slate-300">Admin User</span>
+              <div className="text-slate-400 font-mono text-xs">
+                {new Date().toLocaleDateString('en-US')}
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Dashboard Content */}
-      <main className="flex-1 overflow-auto p-6">
-        {/* System Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatusCard
-            title="Active Cameras"
-            value={activeCameras}
-            icon={Video}
-            iconColor="bg-sky-500/10 text-sky-400"
-            description={`${cameras?.length || 0} total cameras`}
-          />
+      {/* Tactical Dashboard Content */}
+      <main className="flex-1 bg-black p-4">
+        {/* Tactical Status Bar */}
+        <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="bg-slate-900 border border-slate-700 rounded p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-slate-400 font-mono">CAMERAS ACTIVE</div>
+                <div className="text-2xl font-bold text-green-400 font-mono">{activeCameras}</div>
+              </div>
+              <Video className="w-8 h-8 text-sky-400" />
+            </div>
+          </div>
           
-          <StatusCard
-            title="Events Today"
-            value={totalEvents}
-            icon={AlertTriangle}
-            iconColor="bg-amber-500/10 text-amber-400"
-            description="Recent activity"
-          />
+          <div className="bg-slate-900 border border-slate-700 rounded p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-slate-400 font-mono">ACTIVE THREATS</div>
+                <div className="text-2xl font-bold text-red-400 font-mono">{totalEvents}</div>
+              </div>
+              <AlertTriangle className="w-8 h-8 text-amber-400" />
+            </div>
+          </div>
           
-          <StatusCard
-            title="System Health"
-            value={selectedHub.status === "online" ? "Excellent" : "Poor"}
-            icon={Heart}
-            iconColor={selectedHub.status === "online" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}
-            description={`Last ping: ${selectedHub.lastHeartbeat ? new Date(selectedHub.lastHeartbeat).toLocaleTimeString() : "Unknown"}`}
-          />
+          <div className="bg-slate-900 border border-slate-700 rounded p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-slate-400 font-mono">SYSTEM STATUS</div>
+                <div className={`text-2xl font-bold font-mono ${selectedHub.status === "online" ? "text-green-400" : "text-red-400"}`}>
+                  {selectedHub.status === "online" ? "ONLINE" : "OFFLINE"}
+                </div>
+              </div>
+              <Heart className={`w-8 h-8 ${selectedHub.status === "online" ? "text-green-400" : "text-red-400"}`} />
+            </div>
+          </div>
+          
+          <div className="bg-slate-900 border border-slate-700 rounded p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-slate-400 font-mono">RESPONSE TIME</div>
+                <div className="text-2xl font-bold text-blue-400 font-mono">2.3s</div>
+              </div>
+              <Clock className="w-8 h-8 text-blue-400" />
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Live Camera Feeds */}
-          <div className="xl:col-span-2">
-            <div className="bg-slate-850 rounded-xl border border-slate-700 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-white">Live Camera Feeds</h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-slate-600 text-slate-300 hover:text-white"
-                  onClick={() => window.open("/video-wall", "_blank")}
-                >
-                  <Expand className="w-4 h-4 mr-2" />
-                  Full Screen
-                </Button>
+        <div className="grid grid-cols-3 gap-4 h-[calc(100vh-200px)]">
+          {/* Main Camera Grid - Larger Column */}
+          <div className="col-span-2 bg-slate-900 border border-slate-700 rounded">
+            <div className="border-b border-slate-700 px-4 py-2 bg-slate-800">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white font-mono tracking-wider">LIVE SURVEILLANCE GRID</h3>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-red-400 font-mono">RECORDING</span>
+                  <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 ml-4">
+                    <Grid className="w-3 h-3 mr-1" />
+                    2x2
+                  </Button>
+                  <Button variant="outline" size="sm" className="border-slate-600 text-slate-300">
+                    <Maximize2 className="w-3 h-3" />
+                  </Button>
+                </div>
               </div>
-              
+            </div>
+            <div className="p-4">
               {camerasLoading ? (
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="aspect-video bg-slate-900 rounded-lg" />
+                <div className="grid grid-cols-2 gap-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="aspect-video bg-slate-800 rounded border border-slate-600" />
                   ))}
                 </div>
               ) : (
-                <CameraGrid hubId={selectedHubId || undefined} maxCameras={6} />
+                <CameraGrid hubId={selectedHubId || undefined} maxCameras={4} showControls={true} />
               )}
             </div>
           </div>
 
-          {/* Right Sidebar */}
-          <div className="space-y-6">
-            {/* Recent Events */}
-            <div className="bg-slate-850 rounded-xl border border-slate-700 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Recent Events</h3>
-              <EventList hubId={selectedHubId || undefined} limit={5} />
-              <Button
-                variant="outline"
-                className="w-full mt-4 border-slate-600 text-slate-300 hover:text-white"
-                onClick={() => window.location.href = "/events"}
-              >
-                View All Events
-              </Button>
+          {/* Right Panel - Events and Controls */}
+          <div className="space-y-4">
+            {/* Critical Events */}
+            <div className="bg-slate-900 border border-slate-700 rounded flex-1">
+              <div className="border-b border-slate-700 px-4 py-2 bg-slate-800">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-white font-mono tracking-wider">THREAT ALERTS</h3>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-amber-400 font-mono">ACTIVE</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 h-80 overflow-y-auto">
+                <EventList hubId={selectedHubId || undefined} limit={8} />
+              </div>
             </div>
 
-            {/* Hub Controls */}
-            <div className="bg-slate-850 rounded-xl border border-slate-700 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Hub Controls</h3>
-              <div className="space-y-4">
-                {/* Speaker Integration */}
+            {/* Quick Actions */}
+            <div className="bg-slate-900 border border-slate-700 rounded">
+              <div className="border-b border-slate-700 px-4 py-2 bg-slate-800">
+                <h3 className="text-sm font-bold text-white font-mono tracking-wider">TACTICAL CONTROLS</h3>
+              </div>
+              <div className="p-4 space-y-3">
                 {mainSpeaker && (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-white">IP Speaker</p>
-                      <p className="text-xs text-slate-400">{mainSpeaker.zone} - {selectedHub.location}</p>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={handleToggleSpeaker}
-                      disabled={updateSpeaker.isPending || selectedHub.status === "offline"}
-                      className={`${
-                        mainSpeaker.isActive
-                          ? "bg-sky-500 hover:bg-sky-600"
-                          : "bg-slate-700 hover:bg-slate-600"
-                      } text-white transition-colors`}
-                    >
-                      {mainSpeaker.isActive ? (
-                        <>
-                          <Volume2 className="w-4 h-4 mr-1" />
-                          On
-                        </>
-                      ) : (
-                        <>
-                          <VolumeX className="w-4 h-4 mr-1" />
-                          Off
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  <Button 
+                    onClick={handleToggleSpeaker}
+                    disabled={!mainSpeaker || updateSpeaker.isPending}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-mono text-xs"
+                  >
+                    <Volume2 className="w-3 h-3 mr-2" />
+                    {mainSpeaker.isActive ? "DISABLE COMMS" : "ENABLE COMMS"}
+                  </Button>
                 )}
                 
-                {/* Recording Status */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-white">Recording</p>
-                    <p className="text-xs text-slate-400">{activeCameras} cameras active</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full recording-pulse" />
-                    <span className="text-xs text-red-400">REC</span>
-                  </div>
-                </div>
+                <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-mono text-xs">
+                  <AlertTriangle className="w-3 h-3 mr-2" />
+                  EMERGENCY ALERT
+                </Button>
                 
-                {/* Quick Actions */}
-                <div className="pt-4 border-t border-slate-700">
-                  <p className="text-sm font-medium text-white mb-3">Quick Actions</p>
-                  <div className="space-y-2">
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start border-slate-600 text-slate-300 hover:text-white"
-                      disabled={selectedHub.status === "offline"}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Export Footage
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start border-slate-600 text-slate-300 hover:text-white"
-                      disabled={selectedHub.status === "offline"}
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Generate Report
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start border-slate-600 text-slate-300 hover:text-white"
-                      disabled={selectedHub.status === "offline"}
-                    >
-                      <Wrench className="w-4 h-4 mr-2" />
-                      System Diagnostics
-                    </Button>
-                  </div>
-                </div>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-mono text-xs">
+                  <Users className="w-3 h-3 mr-2" />
+                  DISPATCH TEAM
+                </Button>
               </div>
             </div>
           </div>
