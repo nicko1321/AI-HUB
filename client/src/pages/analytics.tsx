@@ -112,6 +112,9 @@ export default function Analytics() {
     }
   ]);
 
+  // Iris input state
+  const [irisInput, setIrisInput] = useState('');
+
   // AI Trigger handlers
   const handleTriggerCreate = async (trigger: Omit<AITrigger, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -191,6 +194,45 @@ export default function Analytics() {
     toast({
       title: "Custom Analytic Deleted",
       description: "Analytic has been removed",
+    });
+  };
+
+  // Handle Iris-style analytic creation
+  const handleCreateFromText = () => {
+    if (!irisInput.trim()) {
+      toast({
+        title: "Description Required",
+        description: "Please describe the analytic you want to create",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Generate a simple name from the input
+    const name = irisInput.split('.')[0].substring(0, 50) + (irisInput.length > 50 ? '...' : '');
+    
+    const newAnalytic = {
+      id: Date.now().toString(),
+      name: name,
+      description: `Custom analytic: ${name}`,
+      category: 'Custom',
+      prompt: irisInput,
+      severity: 'medium' as const,
+      enabled: true,
+      hubIds: [1], // Default to first hub
+      cameraIds: [1], // Default to first camera
+      confidence: 80,
+      timeframe: '24h',
+      actions: ['notification'],
+      conditions: []
+    };
+
+    setCustomAnalytics(prev => [...prev, newAnalytic]);
+    setIrisInput('');
+    
+    toast({
+      title: "Custom Analytic Created",
+      description: `"${name}" has been created successfully`,
     });
   };
 
@@ -447,16 +489,83 @@ export default function Analytics() {
             />
           </TabsContent>
 
-          {/* Custom Analytics Tab */}
+          {/* Custom Analytics Tab - Iris Style */}
           <TabsContent value="custom-analytics" className="space-y-6">
-            <CustomAnalyticsBuilder
-              onAnalyticCreate={handleAnalyticCreate}
-              onAnalyticUpdate={handleAnalyticUpdate}
-              onAnalyticDelete={handleAnalyticDelete}
-              analytics={customAnalytics || []}
-              hubs={hubs || []}
-              cameras={cameras || []}
-            />
+            <Card className="bg-slate-850 border-slate-700">
+              <CardHeader className="text-center pb-8">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-4">
+                  <Zap className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl text-white mb-2">AI Analytics Builder</CardTitle>
+                <CardDescription className="text-slate-400 text-lg">
+                  What analytic would you like to create?
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="max-w-2xl mx-auto">
+                  <div className="relative">
+                    <textarea
+                      value={irisInput}
+                      onChange={(e) => setIrisInput(e.target.value)}
+                      className="w-full p-4 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 resize-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                      rows={4}
+                      placeholder="Describe the analytic you want to create in natural language...
+
+Examples:
+• Monitor for people without hard hats in construction zones
+• Detect when delivery trucks stay longer than 10 minutes
+• Alert when more than 5 people gather in the lobby after hours
+• Track how long customers wait in checkout lines"
+                    />
+                  </div>
+                  <div className="flex justify-center mt-6">
+                    <Button 
+                      onClick={handleCreateFromText}
+                      disabled={!irisInput.trim()}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Create Analytic
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Existing Custom Analytics */}
+                {customAnalytics.length > 0 && (
+                  <div className="mt-8 border-t border-slate-700 pt-6">
+                    <h3 className="text-white font-medium mb-4">Your Custom Analytics</h3>
+                    <div className="grid gap-4">
+                      {customAnalytics.map((analytic) => (
+                        <div key={analytic.id} className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="text-white font-medium">{analytic.name}</h4>
+                              <p className="text-slate-400 text-sm mt-1">{analytic.description}</p>
+                              <p className="text-slate-500 text-xs mt-2">{analytic.prompt}</p>
+                              <div className="flex items-center space-x-4 mt-2">
+                                <Badge variant={analytic.enabled ? "default" : "secondary"}>
+                                  {analytic.enabled ? "Active" : "Inactive"}
+                                </Badge>
+                                <span className="text-xs text-slate-500">
+                                  Confidence: {analytic.confidence}%
+                                </span>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleAnalyticDelete(analytic.id)}
+                              className="text-slate-400 hover:text-red-400"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
