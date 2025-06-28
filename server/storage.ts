@@ -1,5 +1,4 @@
 import { 
-  hubs, cameras, events, speakers, aiTriggers,
   type Hub, type InsertHub,
   type Camera, type InsertCamera,
   type Event, type InsertEvent,
@@ -7,53 +6,14 @@ import {
   type AITrigger, type InsertAITrigger
 } from "@shared/schema";
 
-export interface IStorage {
-  // Hub operations
-  getHubs(): Promise<Hub[]>;
-  getHub(id: number): Promise<Hub | undefined>;
-  createHub(hub: InsertHub): Promise<Hub>;
-  updateHub(id: number, updates: Partial<Hub>): Promise<Hub | undefined>;
-  deleteHub(id: number): Promise<boolean>;
-
-  // Camera operations
-  getCameras(): Promise<Camera[]>;
-  getCamerasByHub(hubId: number): Promise<Camera[]>;
-  getCamera(id: number): Promise<Camera | undefined>;
-  createCamera(camera: InsertCamera): Promise<Camera>;
-  updateCamera(id: number, updates: Partial<Camera>): Promise<Camera | undefined>;
-  deleteCamera(id: number): Promise<boolean>;
-
-  // Event operations
-  getEvents(): Promise<Event[]>;
-  getEventsByHub(hubId: number): Promise<Event[]>;
-  getRecentEvents(limit?: number): Promise<Event[]>;
-  createEvent(event: InsertEvent): Promise<Event>;
-  acknowledgeEvent(id: number): Promise<Event | undefined>;
-  deleteEvent(id: number): Promise<boolean>;
-
-  // Speaker operations
-  getSpeakers(): Promise<Speaker[]>;
-  getSpeakersByHub(hubId: number): Promise<Speaker[]>;
-  getSpeaker(id: number): Promise<Speaker | undefined>;
-  createSpeaker(speaker: InsertSpeaker): Promise<Speaker>;
-  updateSpeaker(id: number, updates: Partial<Speaker>): Promise<Speaker | undefined>;
-  deleteSpeaker(id: number): Promise<boolean>;
-
-  // AI Trigger operations
-  getAITriggers(): Promise<AITrigger[]>;
-  getAITrigger(id: number): Promise<AITrigger | undefined>;
-  createAITrigger(trigger: InsertAITrigger): Promise<AITrigger>;
-  updateAITrigger(id: number, updates: Partial<AITrigger>): Promise<AITrigger | undefined>;
-  deleteAITrigger(id: number): Promise<boolean>;
-}
-
-export class MemStorage implements IStorage {
-  private hubs: Map<number, Hub>;
-  private cameras: Map<number, Camera>;
-  private events: Map<number, Event>;
-  private speakers: Map<number, Speaker>;
-  private aiTriggers: Map<number, AITrigger>;
-  private currentId: { hubs: number; cameras: number; events: number; speakers: number; aiTriggers: number };
+// Simplified in-memory data store
+class DataStore {
+  public hubs: Map<number, Hub> = new Map();
+  public cameras: Map<number, Camera> = new Map();
+  public events: Map<number, Event> = new Map();
+  public speakers: Map<number, Speaker> = new Map();
+  public aiTriggers: Map<number, AITrigger> = new Map();
+  private currentId = { hubs: 1, cameras: 1, events: 1, speakers: 1, aiTriggers: 1 };
 
   constructor() {
     this.hubs = new Map();
@@ -378,4 +338,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DataStore();

@@ -78,6 +78,45 @@ export default function EventList({ hubId, limit = 10, showAcknowledge = true }:
                 {event.description && (
                   <p className="text-xs text-slate-400 mt-1">{event.description}</p>
                 )}
+                
+                {/* License Plate Information */}
+                {event.licensePlate && (
+                  <div className="mt-2 p-2 bg-slate-800 rounded border border-slate-700">
+                    <div className="flex items-center space-x-3">
+                      {event.licensePlateThumbnail && (
+                        <div className="flex-shrink-0">
+                          <img 
+                            src={event.licensePlateThumbnail} 
+                            alt={`License plate ${event.licensePlate}`}
+                            className="w-16 h-8 object-cover rounded border border-slate-600"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-mono text-white bg-slate-700 px-2 py-1 rounded">
+                            {event.licensePlate}
+                          </span>
+                          {event.licensePlateConfidence && (
+                            <span className="text-xs text-slate-400">
+                              {event.licensePlateConfidence}% confidence
+                            </span>
+                          )}
+                        </div>
+                        {event.metadata && typeof event.metadata === 'object' && (
+                          <div className="mt-1 flex items-center space-x-2 text-xs text-slate-500">
+                            {(event.metadata as any).vehicle_type && (
+                              <span>{(event.metadata as any).vehicle_type}</span>
+                            )}
+                            {(event.metadata as any).color && (
+                              <span>• {(event.metadata as any).color}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center space-x-2 mt-1">
                   <p className="text-xs text-slate-500">{formatTimestamp(event.timestamp)}</p>
                   <span className="text-xs text-slate-600">•</span>

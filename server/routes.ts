@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { data } from "./data";
 import { insertHubSchema, insertCameraSchema, insertEventSchema, insertSpeakerSchema, insertAITriggerSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -8,7 +8,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Hub routes
   app.get("/api/hubs", async (req, res) => {
     try {
-      const hubs = await storage.getHubs();
+      const hubs = Array.from(data.hubs.values());
       res.json(hubs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch hubs" });
@@ -18,7 +18,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/hubs/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const hub = await storage.getHub(id);
+      const hub = data.hubs.get(id);
       if (!hub) {
         return res.status(404).json({ message: "Hub not found" });
       }

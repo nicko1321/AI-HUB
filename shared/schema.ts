@@ -29,13 +29,16 @@ export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   hubId: integer("hub_id").notNull(),
   cameraId: integer("camera_id"),
-  type: text("type").notNull(), // motion, alarm, system, connection
+  type: text("type").notNull(), // motion, alarm, system, connection, license_plate
   severity: text("severity").notNull(), // low, medium, high, critical
   title: text("title").notNull(),
   description: text("description"),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
   acknowledged: boolean("acknowledged").notNull().default(false),
   metadata: jsonb("metadata"),
+  licensePlate: text("license_plate"), // captured license plate number
+  licensePlateThumbnail: text("license_plate_thumbnail"), // thumbnail image URL
+  licensePlateConfidence: integer("license_plate_confidence"), // confidence score 0-100
 });
 
 export const speakers = pgTable("speakers", {
