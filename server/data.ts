@@ -22,7 +22,7 @@ function initializeSampleData() {
   const sampleHubs: Hub[] = [
     {
       id: 1,
-      name: "Hub-01",
+      name: "Alert360 AI Hub-01",
       location: "Main Building",
       ipAddress: "192.168.1.10",
       status: "online",
@@ -32,7 +32,7 @@ function initializeSampleData() {
     },
     {
       id: 2,
-      name: "Hub-02",
+      name: "Alert360 AI Hub-02",
       location: "Parking Lot",
       ipAddress: "192.168.1.11",
       status: "online",
@@ -42,7 +42,7 @@ function initializeSampleData() {
     },
     {
       id: 3,
-      name: "Hub-03",
+      name: "Alert360 AI Hub-03",
       location: "Perimeter",
       ipAddress: "192.168.1.12",
       status: "offline",
