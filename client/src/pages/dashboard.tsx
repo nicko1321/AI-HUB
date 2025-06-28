@@ -212,7 +212,7 @@ export default function Dashboard() {
       {/* Modern Dashboard Content */}
       <main className="flex-1 bg-slate-50 dark:bg-slate-950 p-6">
         {/* Modern Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -250,19 +250,6 @@ export default function Dashboard() {
               </div>
               <div className={`p-3 rounded-lg ${selectedHub.status === "online" ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"}`}>
                 <Heart className={`w-6 h-6 ${selectedHub.status === "online" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Response Time</p>
-                <p className="text-3xl font-bold text-slate-900 dark:text-white">2.3s</p>
-                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Average detection speed</p>
-              </div>
-              <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                <Clock className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
