@@ -99,10 +99,31 @@ Alert 360 Video Shield is a full-stack web application for managing security sys
    - **Client-Only**: Use Static deployment with `build:client` script for frontend-only hosting
 
 ### Deployment Configuration Notes
-- Current setup is optimized for **Autoscale deployment** since this is a full-stack application
-- Static deployment fails because it expects only client files at the root level
-- The application requires both frontend (React) and backend (Express) components to function properly
-- Database connectivity requires server-side environment for PostgreSQL connection
+- **IMPORTANT**: This is a full-stack application requiring **Autoscale deployment**
+- **Static deployment will fail** because:
+  - Vite builds client files to `dist/public/` but static deployment expects them in `dist/`
+  - The application requires both frontend (React) and backend (Express) components
+  - Database connectivity requires server-side environment for PostgreSQL connection
+
+### Deployment Options
+
+#### Option 1: Autoscale Deployment (Recommended)
+1. Change deployment target from "static" to "autoscale" in Replit deployment settings
+2. Set build command: `npm run build`
+3. Set run command: `npm run start`
+4. This properly runs both the Express server and serves the React client
+
+#### Option 2: Fix Static Deployment (Alternative)
+If you must use static deployment:
+1. Change public directory from "dist" to "dist/public" in deployment settings
+2. Use build command: `npm run build` (client files will be in dist/public)
+3. Note: This won't work for API functionality - only serves static React files
+
+#### Current Issue Resolution
+The deployment error occurs because:
+- Vite config builds to `dist/public/` 
+- Static deployment looks for files in `dist/`
+- This is a full-stack app that needs server functionality
 
 ### Environment Configuration
 - `DATABASE_URL`: PostgreSQL connection string (required)
