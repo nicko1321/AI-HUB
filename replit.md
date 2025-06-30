@@ -94,7 +94,15 @@ Alert 360 Video Shield is a full-stack web application for managing security sys
 1. **Client Build**: Vite bundles React application to `dist/public`
 2. **Server Build**: ESBuild bundles Express server to `dist/index.js`
 3. **Database**: Drizzle migrations applied via `npm run db:push`
-4. **Deployment**: Autoscale deployment target with health checks
+4. **Deployment**: 
+   - **Full-Stack (Recommended)**: Use Autoscale deployment for complete client+server application
+   - **Client-Only**: Use Static deployment with `build:client` script for frontend-only hosting
+
+### Deployment Configuration Notes
+- Current setup is optimized for **Autoscale deployment** since this is a full-stack application
+- Static deployment fails because it expects only client files at the root level
+- The application requires both frontend (React) and backend (Express) components to function properly
+- Database connectivity requires server-side environment for PostgreSQL connection
 
 ### Environment Configuration
 - `DATABASE_URL`: PostgreSQL connection string (required)
