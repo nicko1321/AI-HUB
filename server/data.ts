@@ -132,7 +132,7 @@ function initializeSampleData() {
       description: "Vehicle license plate captured at parking garage entrance", 
       timestamp: new Date(Date.now() - 5 * 60 * 1000), 
       acknowledged: false, 
-      metadata: { vehicle_type: "sedan", color: "blue" },
+      metadata: { vehicle_type: "sedan", color: "blue", status: "normal" },
       licensePlate: "ABC-1234",
       licensePlateThumbnail: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=100",
       licensePlateConfidence: 94
@@ -147,7 +147,7 @@ function initializeSampleData() {
       description: "Unrecognized license plate detected at parking exit", 
       timestamp: new Date(Date.now() - 20 * 60 * 1000), 
       acknowledged: false, 
-      metadata: { vehicle_type: "truck", color: "white" },
+      metadata: { vehicle_type: "truck", color: "white", status: "unknown" },
       licensePlate: "XYZ-9876",
       licensePlateThumbnail: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=100",
       licensePlateConfidence: 89
@@ -156,13 +156,13 @@ function initializeSampleData() {
       id: 6, 
       hubId: 1, 
       cameraId: 1, 
-      type: "license_plate", 
+      type: "blacklisted_vehicle", 
       severity: "high", 
-      title: "Blacklisted Vehicle", 
+      title: "Blacklisted Vehicle Alert", 
       description: "Vehicle on security watch list detected at main entrance", 
       timestamp: new Date(Date.now() - 45 * 60 * 1000), 
       acknowledged: false, 
-      metadata: { vehicle_type: "suv", color: "black", blacklist_reason: "suspicious activity" },
+      metadata: { vehicle_type: "suv", color: "black", blacklist_reason: "suspicious activity", watchlist_match: true },
       licensePlate: "DEF-5555",
       licensePlateThumbnail: "https://images.unsplash.com/photo-1502877338535-766e1452684a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=100",
       licensePlateConfidence: 97
@@ -171,9 +171,9 @@ function initializeSampleData() {
       id: 7, 
       hubId: 1, 
       cameraId: 3, 
-      type: "behavior_analysis", 
+      type: "unauthorized_access", 
       severity: "high", 
-      title: "Unusual Behavior Detected", 
+      title: "Unauthorized Access Attempt", 
       description: "Person attempting to access server room multiple times with failed keycard swipes. Individual appears agitated, looking around frequently, and trying door handle repeatedly.", 
       timestamp: new Date(Date.now() - 8 * 60 * 1000), 
       acknowledged: false, 
@@ -183,6 +183,7 @@ function initializeSampleData() {
         keycard_attempts: 5,
         behavior_indicators: ["agitation", "repeated door attempts", "looking around"],
         duration_minutes: 3,
+        threat_level: "high",
         confidence: 88
       },
       licensePlate: null,
@@ -193,7 +194,7 @@ function initializeSampleData() {
       id: 8, 
       hubId: 2, 
       cameraId: 4, 
-      type: "object_analysis", 
+      type: "weapon_detection", 
       severity: "critical", 
       title: "Weapon Detection Alert", 
       description: "Individual carrying what appears to be a firearm concealed under jacket. Person walking toward main building entrance with suspicious body language.", 
@@ -203,8 +204,48 @@ function initializeSampleData() {
         object_detected: "potential firearm",
         concealment_location: "under jacket",
         person_direction: "toward main entrance",
-        threat_level: "high",
+        threat_level: "critical",
         confidence: 94
+      },
+      licensePlate: null,
+      licensePlateThumbnail: null,
+      licensePlateConfidence: null
+    },
+    { 
+      id: 9, 
+      hubId: 1, 
+      cameraId: 2, 
+      type: "stolen_plate", 
+      severity: "critical", 
+      title: "Stolen Vehicle Alert", 
+      description: "Vehicle with stolen license plate detected in lobby area. Plate reported stolen 3 days ago.", 
+      timestamp: new Date(Date.now() - 3 * 60 * 1000), 
+      acknowledged: false, 
+      metadata: { 
+        vehicle_type: "motorcycle",
+        color: "red",
+        status: "stolen",
+        stolen_date: "2024-06-27",
+        alert_level: "critical"
+      },
+      licensePlate: "STL-999",
+      licensePlateThumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=100",
+      licensePlateConfidence: 96
+    },
+    { 
+      id: 10, 
+      hubId: 2, 
+      cameraId: 5, 
+      type: "motion", 
+      severity: "low", 
+      title: "Motion Detected", 
+      description: "Normal movement detected at parking exit", 
+      timestamp: new Date(Date.now() - 1 * 60 * 1000), 
+      acknowledged: false, 
+      metadata: { 
+        activity: "normal movement",
+        object_count: 1,
+        duration: 15
       },
       licensePlate: null,
       licensePlateThumbnail: null,
@@ -213,7 +254,7 @@ function initializeSampleData() {
   ];
 
   sampleEvents.forEach(event => data.events.set(event.id, event));
-  data.nextId.events = 9;
+  data.nextId.events = 11;
 
   // Create sample speakers
   const sampleSpeakers: Speaker[] = [
