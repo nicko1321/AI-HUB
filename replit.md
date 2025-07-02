@@ -107,32 +107,29 @@ Alert 360 Video Shield is a full-stack web application for managing security sys
    - **Full-Stack (Recommended)**: Use Autoscale deployment for complete client+server application
    - **Client-Only**: Use Static deployment with `build:client` script for frontend-only hosting
 
-### Deployment Configuration Notes
-- **IMPORTANT**: This is a full-stack application requiring **Autoscale deployment**
-- **Static deployment will fail** because:
-  - Vite builds client files to `dist/public/` but static deployment expects them in `dist/`
-  - The application requires both frontend (React) and backend (Express) components
-  - Database connectivity requires server-side environment for PostgreSQL connection
+### Multi-Platform Deployment Support
 
-### Deployment Options
+The system is configured for deployment on multiple platforms:
 
-#### Option 1: Autoscale Deployment (Recommended)
-1. Change deployment target from "static" to "autoscale" in Replit deployment settings
-2. Set build command: `npm run build`
-3. Set run command: `npm run start`
-4. This properly runs both the Express server and serves the React client
+#### Vercel Deployment (Production Ready)
+- **Configuration**: `vercel.json` with optimized routing
+- **Build Process**: Automatic detection and building
+- **API Routes**: Serverless functions under `/api/*`
+- **Static Assets**: Served from `/dist/public`
+- **Database**: Compatible with Vercel Postgres and Neon
+- **Deploy Command**: `vercel` or GitHub integration
 
-#### Option 2: Fix Static Deployment (Alternative)
-If you must use static deployment:
-1. Change public directory from "dist" to "dist/public" in deployment settings
-2. Use build command: `npm run build` (client files will be in dist/public)
-3. Note: This won't work for API functionality - only serves static React files
+#### Replit Deployment (Development/Testing)
+- **Type**: Autoscale deployment (full-stack)
+- **Build Command**: `npm run build`
+- **Run Command**: `npm run start`
+- **Port**: Auto-configured for Replit environment
 
-#### Current Issue Resolution
-The deployment error occurs because:
-- Vite config builds to `dist/public/` 
-- Static deployment looks for files in `dist/`
-- This is a full-stack app that needs server functionality
+#### Jetson Deployment (Edge/Hardware)
+- **Platform**: NVIDIA Jetson Orin NX 16GB
+- **Installation**: Direct npm install and build
+- **Features**: Hardware acceleration automatically enabled
+- **Performance**: Up to 8 camera streams with GPU acceleration
 
 ### Environment Configuration
 - `DATABASE_URL`: PostgreSQL connection string (required)
