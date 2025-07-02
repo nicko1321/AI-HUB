@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useCameras } from "@/hooks/use-hub-data";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Expand, Play, Pause } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Expand, Play, Pause, Move3D } from "lucide-react";
 import { getStatusColor } from "@/lib/utils";
+import PTZLiveControl from "@/components/ptz-live-control";
 import type { Camera } from "@shared/schema";
 
 interface CameraGridProps {
@@ -77,15 +79,45 @@ export default function CameraGrid({
 
           {/* Overlay with controls */}
           {showControls && (
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center camera-overlay">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="bg-white/20 hover:bg-white/30 text-white"
-                onClick={() => handleExpandCamera(camera)}
-              >
-                <Expand className="w-4 h-4" />
-              </Button>
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Main expand button */}
+              <div className="flex items-center justify-center h-full">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="bg-white/20 hover:bg-white/30 text-white"
+                  onClick={() => handleExpandCamera(camera)}
+                >
+                  <Expand className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {/* PTZ Controls */}
+              {camera.ptzCapable && (
+                <PTZLiveControl camera={camera} size="sm" variant="overlay" />
+              )}
+              
+              {/* Additional controls */}
+              <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center space-x-1">
+                  {camera.ptzCapable && (
+                    <Badge variant="secondary" className="text-xs bg-blue-600/80 text-white">
+                      <Move3D className="w-3 h-3 mr-1" />
+                      PTZ
+                    </Badge>
+                  )}
+                  {camera.audioEnabled && (
+                    <Badge variant="secondary" className="text-xs bg-green-600/80 text-white">
+                      Audio
+                    </Badge>
+                  )}
+                  {camera.nightVision && (
+                    <Badge variant="secondary" className="text-xs bg-purple-600/80 text-white">
+                      Night
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 

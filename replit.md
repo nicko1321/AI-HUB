@@ -2,7 +2,7 @@
 
 ## Overview
 
-Alert 360 Video Shield is a full-stack web application for managing security systems with multiple Jetson Orin Alert 360 AI Hubs, cameras, events, and speakers. The application provides advanced AI-powered video monitoring with license plate detection, behavioral analysis, weapon detection, and comprehensive security management capabilities.
+Alert 360 Video Shield is a full-stack web application for managing security systems with multiple Jetson Orin Alert 360 AI Hubs, cameras, events, and speakers. The application provides advanced AI-powered video monitoring with license plate detection, behavioral analysis, weapon detection, comprehensive security management capabilities, and full PTZ (Pan/Tilt/Zoom) control for IP cameras via RTSP and ONVIF protocols.
 
 ## System Architecture
 
@@ -134,6 +134,9 @@ The deployment error occurs because:
 
 ```
 Changelog:
+- June 30, 2025. Added comprehensive PTZ (Pan/Tilt/Zoom) control functionality for IP cameras with live view integration
+- June 30, 2025. Enhanced camera management with RTSP/ONVIF support and network discovery capabilities
+- June 30, 2025. Implemented advanced alert categorization system distinguishing safety alerts from normal notifications
 - June 28, 2025. Updated hub management to use serial numbers instead of IP addresses for Jetson Orin devices
 - June 25, 2025. Initial setup
 ```

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import CameraManagement from "@/components/camera-management";
+import PTZControl from "@/components/ptz-control";
 import { Settings2, Network, Users, Shield, Database, Activity, Video } from "lucide-react";
 import { getStatusColor } from "@/lib/utils";
 
@@ -126,13 +127,18 @@ function CameraManagerSection({ hubs }: { hubs: any[] | undefined }) {
                         REC
                       </Badge>
                     )}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="border-slate-600 text-slate-300 hover:text-white"
-                    >
-                      Configure
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                      {camera.ptzCapable && (
+                        <PTZControl camera={camera} />
+                      )}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="border-slate-600 text-slate-300 hover:text-white"
+                      >
+                        Configure
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}

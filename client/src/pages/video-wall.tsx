@@ -2,10 +2,11 @@ import { useState, useContext } from "react";
 import { useCameras } from "@/hooks/use-hub-data";
 import { HubContext } from "@/components/hub-selector";
 import CameraGrid from "@/components/camera-grid";
+import PTZLiveControl from "@/components/ptz-live-control";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Grid3x3, Grid2x2, Maximize, Minimize } from "lucide-react";
+import { Grid3x3, Grid2x2, Maximize, Minimize, Move3D } from "lucide-react";
 import type { Camera } from "@shared/schema";
 
 const gridLayouts = [
@@ -173,33 +174,119 @@ export default function VideoWall() {
 
       {/* Expanded Camera Modal */}
       <Dialog open={!!expandedCamera} onOpenChange={() => setExpandedCamera(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] bg-slate-900 border-slate-700">
+        <DialogContent className="max-w-6xl max-h-[90vh] bg-slate-900 border-slate-700">
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {expandedCamera?.name} - {expandedCamera?.location}
+            <DialogTitle className="text-white flex items-center justify-between">
+              <div>
+                {expandedCamera?.name} - {expandedCamera?.location}
+              </div>
+              {expandedCamera?.ptzCapable && (
+                <div className="flex items-center space-x-2 text-sm text-blue-400">
+                  <Move3D className="w-4 h-4" />
+                  <span>PTZ Enabled</span>
+                </div>
+              )}
             </DialogTitle>
           </DialogHeader>
-          <div className="aspect-video bg-slate-800 rounded-lg overflow-hidden">
-            {expandedCamera?.thumbnailUrl ? (
-              <img
-                src={expandedCamera.thumbnailUrl}
-                alt={`${expandedCamera.name} - ${expandedCamera.location}`}
-                className="w-full h-full object-cover"
-              />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Camera Feed */}
+            <div className="lg:col-span-3">
+              <div className="aspect-video bg-slate-800 rounded-lg overflow-hidden relative">
+                {expandedCamera?.thumbnailUrl ? (
+                  <img
+                    src={expandedCamera.thumbnailUrl}
+                    alt={`${expandedCamera.name} - ${expandedCamera.location}`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <p className="text-slate-400">No feed available</p>
+                  </div>
+                )}
+                
+                {/* Live stream overlay info */}
+                <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-2 rounded text-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <span>LIVE</span>
+                  </div>
+                </div>
+                
+                {/* Stream info */}
+                <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-2 rounded text-xs">
+                  {expandedCamera?.resolution} • {expandedCamera?.fps} FPS • {expandedCamera?.codec}
+                </div>
+              </div>
+              
+              {/* Camera Status Bar */}
+              <div className="flex items-center justify-between mt-4 text-sm text-slate-400">
+                <div className="flex items-center space-x-4">
+                  <span>Hub {expandedCamera?.hubId}</span>
+                  <span>•</span>
+                  <span>{expandedCamera?.protocol?.toUpperCase()}</span>
+                  <span>•</span>
+                  <span>{expandedCamera?.ipAddress}:{expandedCamera?.port}</span>
+                </div>
+                <span className={`capitalize font-medium ${
+                  expandedCamera?.status === "online" ? "text-green-400" : 
+                  expandedCamera?.status === "offline" ? "text-red-400" : "text-amber-400"
+                }`}>
+                  {expandedCamera?.status}
+                </span>
+              </div>
+            </div>
+            
+            {/* PTZ Controls Sidebar */}
+            {expandedCamera?.ptzCapable ? (
+              <div className="lg:col-span-1">
+                <div className="bg-slate-800 rounded-lg p-4">
+                  <h3 className="text-white font-medium mb-4 flex items-center">
+                    <Move3D className="w-4 h-4 mr-2" />
+                    PTZ Control
+                  </h3>
+                  <PTZLiveControl 
+                    camera={expandedCamera} 
+                    size="md" 
+                    variant="inline" 
+                  />
+                </div>
+              </div>
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <p className="text-slate-400">No feed available</p>
+              <div className="lg:col-span-1">
+                <div className="bg-slate-800 rounded-lg p-4">
+                  <h3 className="text-white font-medium mb-4">Camera Info</h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <div className="text-slate-400">Resolution</div>
+                      <div className="text-white">{expandedCamera?.resolution}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400">Frame Rate</div>
+                      <div className="text-white">{expandedCamera?.fps} FPS</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400">Codec</div>
+                      <div className="text-white">{expandedCamera?.codec}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400">Features</div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {expandedCamera?.audioEnabled && (
+                          <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">Audio</span>
+                        )}
+                        {expandedCamera?.nightVision && (
+                          <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Night Vision</span>
+                        )}
+                        {expandedCamera?.motionDetection && (
+                          <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">Motion</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-          <div className="flex items-center justify-between text-sm text-slate-400">
-            <span>Hub {expandedCamera?.hubId} • IP: {expandedCamera?.ipAddress}</span>
-            <span className={`capitalize ${
-              expandedCamera?.status === "online" ? "text-green-400" : 
-              expandedCamera?.status === "offline" ? "text-red-400" : "text-amber-400"
-            }`}>
-              {expandedCamera?.status}
-            </span>
           </div>
         </DialogContent>
       </Dialog>

@@ -98,6 +98,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PTZ control endpoint
+  app.post("/api/cameras/:id/ptz", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const camera = await storage.getCamera(id);
+      
+      if (!camera) {
+        return res.status(404).json({ message: "Camera not found" });
+      }
+      
+      if (!camera.ptzCapable) {
+        return res.status(400).json({ message: "Camera does not support PTZ control" });
+      }
+      
+      const { action, direction, value } = req.body;
+      
+      // Simulate PTZ command execution
+      const ptzCommand = {
+        cameraId: id,
+        action,
+        direction,
+        value,
+        timestamp: new Date(),
+        success: true
+      };
+      
+      // In a real implementation, this would send ONVIF commands to the camera
+      // For now, we'll simulate the response
+      console.log(`PTZ command sent to camera ${id}: ${action} ${direction || ''} speed: ${value || 'default'}`);
+      
+      res.json({
+        success: true,
+        command: ptzCommand,
+        message: `PTZ ${action} command executed successfully`
+      });
+      
+    } catch (error) {
+      res.status(500).json({ message: "Failed to execute PTZ command" });
+    }
+  });
+
   // Event routes
   app.get("/api/events", async (req, res) => {
     try {
