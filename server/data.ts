@@ -63,7 +63,7 @@ function initializeSampleData() {
       thumbnailUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
       protocol: "rtsp", port: 554, username: "admin", password: "password", streamPath: "/stream",
       onvifPort: 80, resolution: "1920x1080", fps: 30, codec: "H.264", ptzCapable: false,
-      audioEnabled: true, nightVision: true, motionDetection: true
+      audioEnabled: true, nightVision: true, aiAnalyticsEnabled: true
     },
     { 
       id: 2, hubId: 1, name: "Camera 02", location: "Lobby", ipAddress: "192.168.1.101", 
@@ -71,7 +71,7 @@ function initializeSampleData() {
       thumbnailUrl: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
       protocol: "rtsp", port: 554, username: "admin", password: "password", streamPath: "/stream",
       onvifPort: 80, resolution: "1920x1080", fps: 30, codec: "H.264", ptzCapable: true,
-      audioEnabled: false, nightVision: false, motionDetection: true
+      audioEnabled: false, nightVision: false, aiAnalyticsEnabled: true
     },
     { 
       id: 3, hubId: 1, name: "Camera 03", location: "Server Room", ipAddress: "192.168.1.102", 
@@ -79,7 +79,7 @@ function initializeSampleData() {
       thumbnailUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
       protocol: "rtsp", port: 554, username: null, password: null, streamPath: "/stream",
       onvifPort: 80, resolution: "1280x720", fps: 15, codec: "H.264", ptzCapable: false,
-      audioEnabled: false, nightVision: true, motionDetection: true
+      audioEnabled: false, nightVision: true, aiAnalyticsEnabled: true
     },
     { 
       id: 4, hubId: 2, name: "Camera 04", location: "Parking Garage", ipAddress: "192.168.1.200", 
@@ -87,7 +87,7 @@ function initializeSampleData() {
       thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
       protocol: "rtsp", port: 554, username: "user", password: "pass123", streamPath: "/cam1",
       onvifPort: 80, resolution: "1920x1080", fps: 25, codec: "H.265", ptzCapable: true,
-      audioEnabled: true, nightVision: true, motionDetection: true
+      audioEnabled: true, nightVision: true, aiAnalyticsEnabled: true
     },
     { 
       id: 5, hubId: 2, name: "Camera 05", location: "Parking Exit", ipAddress: "192.168.1.201", 
@@ -95,7 +95,7 @@ function initializeSampleData() {
       thumbnailUrl: "https://images.unsplash.com/photo-1497366412874-3415097a27e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
       protocol: "rtsp", port: 8554, username: null, password: null, streamPath: "/live",
       onvifPort: 8080, resolution: "2560x1440", fps: 30, codec: "H.264", ptzCapable: false,
-      audioEnabled: false, nightVision: true, motionDetection: true
+      audioEnabled: false, nightVision: true, aiAnalyticsEnabled: true
     },
     { 
       id: 6, hubId: 3, name: "Camera 06", location: "Perimeter North", ipAddress: "192.168.1.300", 
@@ -103,32 +103,36 @@ function initializeSampleData() {
       thumbnailUrl: null,
       protocol: "rtsp", port: 554, username: null, password: null, streamPath: "/stream",
       onvifPort: 80, resolution: "1920x1080", fps: 30, codec: "H.264", ptzCapable: false,
-      audioEnabled: false, nightVision: false, motionDetection: true
+      audioEnabled: false, nightVision: false, aiAnalyticsEnabled: true
     },
   ];
 
   sampleCameras.forEach(camera => data.cameras.set(camera.id, camera));
   data.nextId.cameras = 7;
 
-  // Create sample events
+  // Create sample AI intelligence insights (no basic security events)
   const sampleEvents: Event[] = [
     { 
       id: 1, 
       hubId: 1, 
       cameraId: 2, 
-      type: "person_analysis", 
+      type: "behavioral_pattern_analysis", 
       severity: "medium", 
-      title: "Person Activity Analysis", 
-      description: "Two people in business attire having a conversation near the reception desk. One person carrying a briefcase, both wearing ID badges. Normal visitor behavior detected.", 
+      title: "Behavioral Pattern Analysis Alert", 
+      description: "Advanced AI behavioral analysis detected two individuals in business attire exhibiting normal social interaction patterns. Body language indicates professional conversation, with positive postural alignment and appropriate spatial positioning.", 
       timestamp: new Date(Date.now() - 2 * 60 * 1000), 
       acknowledged: false, 
       metadata: { 
-        people_count: 2, 
-        activity: "conversation", 
-        attire: "business", 
-        objects: ["briefcase", "ID badges"],
-        behavior_assessment: "normal visitor activity",
-        confidence: 92
+        ai_analysis_type: "behavioral_pattern_recognition", 
+        subject_count: 2, 
+        interaction_category: "professional_conversation", 
+        attire_classification: "business_formal", 
+        detected_objects: ["briefcase", "ID badges"],
+        behavior_risk_score: 12,
+        social_dynamics: "collaborative",
+        stress_indicators: "none_detected",
+        ai_confidence: 94,
+        processing_time_ms: 78
       },
       licensePlate: null,
       licensePlateThumbnail: null,
@@ -278,16 +282,22 @@ function initializeSampleData() {
       id: 10, 
       hubId: 2, 
       cameraId: 5, 
-      type: "motion", 
-      severity: "low", 
-      title: "Motion Detected", 
-      description: "Normal movement detected at parking exit", 
+      type: "person_detection", 
+      severity: "medium", 
+      title: "Person Detected", 
+      description: "AI-powered person detection at parking exit - individual identified with 92% confidence", 
       timestamp: new Date(Date.now() - 1 * 60 * 1000), 
       acknowledged: false, 
       metadata: { 
-        activity: "normal movement",
-        object_count: 1,
-        duration: 15
+        ai_confidence: 92,
+        detection_method: "neural_network",
+        person_attributes: {
+          height: "average",
+          clothing: "casual",
+          posture: "normal"
+        },
+        behavior_analysis: "walking_normal_pace",
+        threat_level: "none"
       },
       licensePlate: null,
       licensePlateThumbnail: null,

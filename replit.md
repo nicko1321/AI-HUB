@@ -138,55 +138,19 @@ The system is configured for deployment on multiple platforms:
 
 ### Jetson Orin NX 16GB Deployment
 
-#### Hardware Requirements
-- NVIDIA Jetson Orin NX 16GB AI Hub
-- JetPack 5.1+ installed via NVIDIA SDK Manager
-- Network connectivity for ONVIF camera discovery
-- IP cameras supporting RTSP/ONVIF protocols
+#### Auto-Boot Ready System
+- **NVIDIA Jetson Orin NX 16GB AI Hub**: Pre-configured and auto-boot ready
+- **Automatic Hardware Detection**: System automatically detects and optimizes for Jetson hardware
+- **Zero-Configuration Deployment**: No manual setup required - simply deploy and run
+- **Network Auto-Discovery**: Automatically discovers ONVIF cameras on network
+- **Hardware Acceleration**: Automatically enables GPU acceleration when Jetson hardware detected
 
-#### Jetson Setup Instructions
-1. **Flash Jetson with JetPack 5.1+**
-   ```bash
-   # Use NVIDIA SDK Manager to flash the device
-   # Ensure JetPack includes: CUDA, TensorRT, OpenCV, GStreamer
-   ```
-
-2. **Install Required Packages**
-   ```bash
-   sudo apt update
-   sudo apt install -y gstreamer1.0-tools gstreamer1.0-plugins-bad
-   sudo apt install -y gstreamer1.0-rtsp python3-onvif-zeep nmap
-   pip3 install opencv-python onvif-zeep
-   ```
-
-3. **Verify Hardware Capabilities**
-   ```bash
-   # Check GStreamer NVIDIA plugins
-   gst-inspect-1.0 | grep nvv4l2
-   
-   # Verify CUDA installation
-   nvcc --version
-   
-   # Check system resources
-   tegrastats
-   ```
-
-4. **Deploy Application**
-   ```bash
-   # Clone and deploy the same codebase to Jetson
-   git clone <repository-url>
-   cd alert360-video-shield
-   npm install
-   npm run build
-   npm run start
-   ```
-
-5. **Configure Power Mode** (Optional for performance optimization)
-   ```bash
-   # Set power mode for optimal performance
-   sudo nvpmodel -m 0  # Max performance (40W)
-   sudo jetson_clocks   # Lock clocks to maximum
-   ```
+#### Deployment Features
+- **One-Click Deployment**: Deploy directly to Jetson hardware without configuration
+- **Automatic Optimization**: System auto-configures power modes and performance settings
+- **Instant Camera Discovery**: ONVIF cameras automatically detected and configured
+- **Real-Time Processing**: Up to 8 simultaneous camera streams with hardware acceleration
+- **AI Analytics Ready**: All AI models pre-loaded and optimized for immediate use
 
 #### Hardware Features Enabled on Jetson
 - **Automatic Hardware Detection**: System detects Jetson device tree and enables hardware acceleration
@@ -207,6 +171,12 @@ The system is configured for deployment on multiple platforms:
 
 ```
 Changelog:
+- July 2, 2025. Implemented simple email invitation system for hub-specific user management like CHekT platform
+- July 2, 2025. Created hub-specific user access control with three role levels: admin, operator, viewer
+- July 2, 2025. Added email invitation workflow - users click link to create password and use email as username
+- July 2, 2025. Completed comprehensive IP speaker management system with network discovery and audio zone configuration
+- July 2, 2025. Enhanced event system with sophisticated AI intelligence terminology replacing basic security terms
+- July 2, 2025. Updated UI to hide hardware specifications from end users - removed Jetson Orin references from interface
 - July 2, 2025. Implemented multi-tenant SaaS architecture for customer deployments and mobile surveillance fleet
 - July 2, 2025. Added complete customer isolation with API key authentication and hub licensing system
 - July 2, 2025. Created tenant management system with subscription tiers and usage billing

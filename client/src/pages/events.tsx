@@ -7,32 +7,43 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Filter, Check, AlertCircle, Shield, Wifi, Activity } from "lucide-react";
+import { Search, Filter, Check, AlertCircle, Shield, Wifi, Activity, Eye, Brain, Target, Zap, Car, User, Camera } from "lucide-react";
 import { formatTimestamp, getSeverityColor } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import type { Event } from "@shared/schema";
 
-const eventTypeIcons = {
-  motion: Activity,
-  alarm: AlertCircle,
-  system: Shield,
+const intelligenceTypeIcons = {
+  behavioral_pattern_analysis: Brain,
+  license_plate_recognition: Car,
+  threat_assessment: Shield,
+  weapon_detection: Target,
+  facial_recognition: User,
+  vehicle_intelligence: Car,
+  crowd_density_analysis: Activity,
+  person_detection: User,
+  unauthorized_access: AlertCircle,
+  blacklisted_vehicle: Shield,
+  system: Wifi,
   connection: Wifi,
+  license_plate: Car,
+  person_analysis: Eye,
+  object_analysis: Camera,
 };
 
-const severityFilters = [
-  { label: "All Severity", value: "all" },
-  { label: "Critical", value: "critical" },
-  { label: "High", value: "high" },
-  { label: "Medium", value: "medium" },
-  { label: "Low", value: "low" },
+const priorityFilters = [
+  { label: "All Priority", value: "all" },
+  { label: "Critical Intelligence", value: "critical" },
+  { label: "High Priority", value: "high" },
+  { label: "Standard Analysis", value: "medium" },
+  { label: "Routine Monitoring", value: "low" },
 ];
 
-const typeFilters = [
-  { label: "All Types", value: "all" },
-  { label: "Motion", value: "motion" },
-  { label: "Alarm", value: "alarm" },
-  { label: "System", value: "system" },
-  { label: "Connection", value: "connection" },
+const intelligenceFilters = [
+  { label: "All Intelligence", value: "all" },
+  { label: "Behavioral Analysis", value: "behavioral_pattern_analysis" },
+  { label: "Vehicle Intelligence", value: "vehicle_intelligence" },
+  { label: "Threat Assessment", value: "threat_assessment" },
+  { label: "Facial Recognition", value: "facial_recognition" },
 ];
 
 export default function Events() {
@@ -42,8 +53,8 @@ export default function Events() {
   const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [severityFilter, setSeverityFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [intelligenceFilter, setIntelligenceFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
 
   const handleAcknowledge = async (event: Event) => {
@@ -74,11 +85,11 @@ export default function Events() {
     if (searchTerm && !event.title.toLowerCase().includes(searchTerm.toLowerCase()) && 
         !event.description?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     
-    // Severity filter
-    if (severityFilter !== "all" && event.severity !== severityFilter) return false;
+    // Priority filter
+    if (priorityFilter !== "all" && event.severity !== priorityFilter) return false;
     
-    // Type filter
-    if (typeFilter !== "all" && event.type !== typeFilter) return false;
+    // Intelligence filter
+    if (intelligenceFilter !== "all" && event.type !== intelligenceFilter) return false;
     
     return true;
   }) || [];
@@ -109,9 +120,9 @@ export default function Events() {
       <header className="bg-slate-900 border-b border-slate-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h2 className="text-2xl font-semibold text-white">Events</h2>
+            <h2 className="text-2xl font-semibold text-white">AI Intelligence Insights</h2>
             <div className="flex items-center space-x-2 text-sm text-slate-400">
-              <span>{filteredEvents.length} events</span>
+              <span>{filteredEvents.length} intelligence reports</span>
               {selectedHubId && (
                 <>
                   <span>•</span>
@@ -126,19 +137,19 @@ export default function Events() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
               <Input
-                placeholder="Search events..."
+                placeholder="Search intelligence reports..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 w-64 bg-slate-800 border-slate-600 text-white"
               />
             </div>
             
-            <Select value={severityFilter} onValueChange={setSeverityFilter}>
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
               <SelectTrigger className="w-32 bg-slate-800 border-slate-600 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-600">
-                {severityFilters.map((filter) => (
+                {priorityFilters.map((filter) => (
                   <SelectItem key={filter.value} value={filter.value} className="text-white hover:bg-slate-700">
                     {filter.label}
                   </SelectItem>
@@ -146,12 +157,12 @@ export default function Events() {
               </SelectContent>
             </Select>
             
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <Select value={intelligenceFilter} onValueChange={setIntelligenceFilter}>
               <SelectTrigger className="w-32 bg-slate-800 border-slate-600 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-600">
-                {typeFilters.map((filter) => (
+                {intelligenceFilters.map((filter) => (
                   <SelectItem key={filter.value} value={filter.value} className="text-white hover:bg-slate-700">
                     {filter.label}
                   </SelectItem>
@@ -189,7 +200,7 @@ export default function Events() {
                 </div>
               ) : (
                 filteredEvents.map((event) => {
-                  const IconComponent = eventTypeIcons[event.type as keyof typeof eventTypeIcons] || AlertCircle;
+                  const IconComponent = intelligenceTypeIcons[event.type as keyof typeof intelligenceTypeIcons] || AlertCircle;
                   
                   return (
                     <div

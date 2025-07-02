@@ -278,8 +278,8 @@ export default function VideoWall() {
                         {expandedCamera?.nightVision && (
                           <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Night Vision</span>
                         )}
-                        {expandedCamera?.motionDetection && (
-                          <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">Motion</span>
+                        {expandedCamera?.aiAnalyticsEnabled && (
+                          <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">AI Analytics</span>
                         )}
                       </div>
                     </div>

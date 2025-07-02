@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useHubs, useCameras } from "@/hooks/use-hub-data";
+import { useHubs, useCameras, useSpeakers } from "@/hooks/use-hub-data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,14 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import CameraManagement from "@/components/camera-management";
+import SpeakerManagement from "@/components/speaker-management";
 import PTZControl from "@/components/ptz-control";
-import { Settings2, Network, Users, Shield, Database, Activity, Video } from "lucide-react";
+import SimpleHubUsers from "@/components/simple-hub-users";
+import { Settings2, Network, Users, Shield, Database, Activity, Video, Volume2 } from "lucide-react";
 import { getStatusColor } from "@/lib/utils";
+import type { Speaker } from "../../../shared/schema";
 
 // Camera Manager Section Component
 function CameraManagerSection({ hubs }: { hubs: any[] | undefined }) {
   const [selectedHubId, setSelectedHubId] = useState<number>(hubs?.[0]?.id || 1);
   const { data: cameras, isLoading: camerasLoading } = useCameras(selectedHubId);
+  const { data: speakers, isLoading: speakersLoading } = useSpeakers(selectedHubId);
 
   if (!hubs?.length) {
     return (
@@ -149,6 +153,89 @@ function CameraManagerSection({ hubs }: { hubs: any[] | undefined }) {
               <p className="text-slate-400">No cameras configured</p>
               <p className="text-slate-500 text-sm mt-1">
                 Add cameras to start monitoring this hub
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* IP Speaker Management */}
+      <Card className="bg-slate-850 border-slate-700">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-white">IP Speaker Management</CardTitle>
+              <CardDescription className="text-slate-400">
+                Manage IP speakers for emergency announcements and zone-based audio communications
+              </CardDescription>
+            </div>
+            <SpeakerManagement hubId={selectedHubId} speakers={speakers || []} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {speakersLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 bg-slate-800" />
+              ))}
+            </div>
+          ) : speakers?.length ? (
+            <div className="space-y-4">
+              {speakers.map((speaker) => (
+                <div
+                  key={speaker.id}
+                  className="flex items-center justify-between p-4 bg-slate-900 rounded-lg border border-slate-700"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-3 h-3 rounded-full ${getStatusColor(speaker.status)}`} />
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <h3 className="text-white font-medium">{speaker.name}</h3>
+                        <Badge variant="outline" className="text-xs border-slate-600 text-slate-300">
+                          {speaker.zone}
+                        </Badge>
+                      </div>
+                      <p className="text-slate-400 text-sm">{speaker.ipAddress}</p>
+                      <div className="flex items-center space-x-4 mt-1 text-xs text-slate-500">
+                        <span>Volume: {speaker.volume}%</span>
+                        <span>Status: {speaker.status}</span>
+                        {speaker.isActive && (
+                          <Badge variant="destructive" className="text-xs">
+                            ACTIVE
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge 
+                      className={`text-xs ${
+                        speaker.status === "online" ? "bg-green-600" : 
+                        speaker.status === "offline" ? "bg-red-600" : "bg-amber-600"
+                      } ${
+                        speaker.status === "online" ? "text-white" : 
+                        speaker.status === "offline" ? "text-white" : "text-black"
+                      }`}
+                    >
+                      {speaker.status}
+                    </Badge>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-slate-600 text-slate-300 hover:text-white"
+                    >
+                      Configure
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Volume2 className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <p className="text-slate-400">No IP speakers configured</p>
+              <p className="text-slate-500 text-sm mt-1">
+                Add IP speakers for emergency announcements and zone communications
               </p>
             </div>
           )}
@@ -337,23 +424,31 @@ export default function Settings() {
 
             {/* User Management */}
             <TabsContent value="users" className="space-y-6">
-              <Card className="bg-slate-850 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white">User Accounts</CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Manage user accounts and access permissions
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-12">
-                    <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                    <p className="text-slate-400">User management coming soon</p>
-                    <p className="text-slate-500 text-sm mt-1">
-                      This feature will allow you to manage user accounts and permissions
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              {hubs && hubs.length > 0 ? (
+                <div className="space-y-6">
+                  {hubs.map((hub) => (
+                    <SimpleHubUsers key={hub.id} hubId={hub.id} hubName={hub.name} />
+                  ))}
+                </div>
+              ) : (
+                <Card className="bg-slate-850 border-slate-700">
+                  <CardHeader>
+                    <CardTitle className="text-white">User Management</CardTitle>
+                    <CardDescription className="text-slate-400">
+                      No hubs available for user management
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-12">
+                      <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                      <p className="text-slate-400">Add a hub first</p>
+                      <p className="text-slate-500 text-sm mt-1">
+                        You need to have hubs configured before you can invite users
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* Security Settings */}

@@ -1,346 +1,481 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Car, Shield, AlertTriangle, Download, Filter, Clock, Plus } from "lucide-react";
-import { formatTimestamp, getSeverityColor } from "@/lib/utils";
-import { useHubs, useEvents } from "@/hooks/use-hub-data";
-import { HubContext } from "@/components/hub-selector";
-import { useContext } from "react";
+// Removed DataTable import as it's not needed for this layout
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, Search, Car, Clock, Gauge, MapPin, Camera, Zap } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { type VehicleAnalytics, type LicensePlateEvent } from "@shared/schema";
 
-export default function LicensePlates() {
-  const { selectedHubId } = useContext(HubContext);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [severityFilter, setSeverityFilter] = useState<string>("all");
-  const [timeFilter, setTimeFilter] = useState<string>("all");
+interface VehicleAnalyticsDashboard {
+  totalDetections: number;
+  uniqueVehicles: number;
+  speedViolations: number;
+  watchListMatches: number;
+  averageProcessingTime: number;
+  hourlyTrafficFlow: Array<{
+    hour: number;
+    vehicleCount: number;
+    averageSpeed: number;
+  }>;
+  topVehicleMakes: Array<{
+    make: string;
+    count: number;
+    percentage: number;
+  }>;
+  colorDistribution: Array<{
+    color: string;
+    count: number;
+    percentage: number;
+  }>;
+  speedAnalytics: {
+    averageSpeed: number;
+    maxSpeed: number;
+    speedLimitViolations: number;
+    speedDistribution: Array<{
+      range: string;
+      count: number;
+    }>;
+  };
+}
 
-  // Get all events and filter for license plate events
-  const { data: allEvents = [] } = useEvents(selectedHubId || undefined);
-  
-  const licensePlateEvents = allEvents.filter(event => 
-    event.type === "license_plate" && event.licensePlate
-  );
+export default function LicensePlatesPage() {
+  const [searchPlate, setSearchPlate] = useState("");
+  const [selectedHub, setSelectedHub] = useState<string>("all");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Filter events based on search and filters
-  const filteredEvents = licensePlateEvents.filter(event => {
-    const matchesSearch = !searchTerm || 
-      event.licensePlate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesSeverity = severityFilter === "all" || event.severity === severityFilter;
-    
-    let matchesTime = true;
-    if (timeFilter !== "all") {
-      const eventTime = new Date(event.timestamp);
-      const now = new Date();
-      const hoursAgo = {
-        "1h": 1,
-        "6h": 6,
-        "24h": 24,
-        "7d": 24 * 7
-      }[timeFilter] || 0;
-      
-      matchesTime = (now.getTime() - eventTime.getTime()) <= (hoursAgo * 60 * 60 * 1000);
-    }
-    
-    return matchesSearch && matchesSeverity && matchesTime;
+  // Fetch hubs for filtering
+  const { data: hubs = [] } = useQuery({
+    queryKey: ["/api/hubs"],
   });
 
-  // Get summary stats
-  const totalDetections = licensePlateEvents.length;
-  const recentDetections = licensePlateEvents.filter(e => 
-    new Date(e.timestamp) > new Date(Date.now() - 24 * 60 * 60 * 1000)
-  ).length;
+  // Fetch recent license plate detections
+  const { data: recentDetections = [], isLoading: detectionsLoading } = useQuery({
+    queryKey: ["/api/license-plates/recent"],
+  });
 
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case "high":
-      case "critical":
-        return <AlertTriangle className="w-4 h-4" />;
-      default:
-        return <Shield className="w-4 h-4" />;
+  // Fetch vehicle analytics dashboard
+  const { data: dashboard, isLoading: dashboardLoading } = useQuery<VehicleAnalyticsDashboard>({
+    queryKey: ["/api/vehicle-analytics/dashboard", selectedHub === "all" ? undefined : selectedHub],
+    queryFn: async () => {
+      const url = selectedHub === "all" 
+        ? "/api/vehicle-analytics/dashboard"
+        : `/api/vehicle-analytics/dashboard?hubId=${selectedHub}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch dashboard");
+      return response.json();
+    }
+  });
+
+  // Search license plates
+  const searchMutation = useMutation({
+    mutationFn: async (plate: string) => {
+      const response = await fetch(`/api/license-plates/search?plate=${encodeURIComponent(plate)}`);
+      if (!response.ok) throw new Error("Search failed");
+      return response.json();
+    },
+    onSuccess: (results) => {
+      queryClient.setQueryData(["/api/license-plates/search", searchPlate], results);
+    },
+    onError: () => {
+      toast({
+        title: "Search Failed",
+        description: "Unable to search for license plate detections",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSearch = () => {
+    if (searchPlate.trim()) {
+      searchMutation.mutate(searchPlate.trim());
     }
   };
 
-  const exportData = () => {
-    const csvData = filteredEvents.map(event => ({
-      timestamp: formatTimestamp(event.timestamp),
-      licensePlate: event.licensePlate,
-      severity: event.severity,
-      confidence: event.licensePlateConfidence,
-      camera: `Camera ${event.cameraId}`,
-      description: event.description
-    }));
+  const formatDateTime = (date: string | Date) => {
+    return new Date(date).toLocaleString();
+  };
 
-    const csv = [
-      Object.keys(csvData[0]).join(','),
-      ...csvData.map(row => Object.values(row).join(','))
-    ].join('\n');
+  const getConfidenceColor = (confidence: number) => {
+    if (confidence >= 90) return "bg-green-500";
+    if (confidence >= 75) return "bg-yellow-500";
+    return "bg-red-500";
+  };
 
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `license-plates-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const getSpeedColor = (speed: number | null) => {
+    if (!speed) return "text-gray-500";
+    if (speed > 45) return "text-red-500";
+    if (speed > 35) return "text-yellow-500";
+    return "text-green-500";
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">License Plate Capture</h1>
+          <h1 className="text-3xl font-bold">License Plate Analytics</h1>
           <p className="text-muted-foreground">
-            Monitor and analyze license plate detections across your security network
+            Comprehensive vehicle detection and license plate recognition system
           </p>
         </div>
-        <Button onClick={exportData} variant="outline" className="flex items-center gap-2">
-          <Download className="w-4 h-4" />
-          Export Data
-        </Button>
+        <div className="flex items-center gap-4">
+          <Select value={selectedHub} onValueChange={setSelectedHub}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select Hub" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Hubs</SelectItem>
+              {hubs.map((hub: any) => (
+                <SelectItem key={hub.id} value={hub.id.toString()}>
+                  {hub.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      {/* Analytics Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Captures</CardTitle>
-            <Car className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{licensePlateEvents.length}</div>
-            <p className="text-xs text-muted-foreground">
-              All time detections
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent (24h)</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{recentDetections}</div>
-            <p className="text-xs text-muted-foreground">
-              Last 24 hours
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Watch List</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Active alerts
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Captures</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Detections</CardTitle>
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {licensePlateEvents.filter(e => {
-                const today = new Date();
-                const eventDate = new Date(e.timestamp);
-                return eventDate.toDateString() === today.toDateString();
-              }).length}
+              {dashboardLoading ? "..." : dashboard?.totalDetections || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              Last 24 hours
+              License plates detected
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Unique Vehicles</CardTitle>
+            <Zap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {dashboardLoading ? "..." : dashboard?.uniqueVehicles || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Different vehicles identified
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Speed Violations</CardTitle>
+            <Gauge className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-500">
+              {dashboardLoading ? "..." : dashboard?.speedViolations || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Speed limit exceeded
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Watch List Matches</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-500">
+              {dashboardLoading ? "..." : dashboard?.watchListMatches || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Security alerts triggered
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content with Tabs */}
-      <Tabs defaultValue="detections" className="space-y-6">
+      <Tabs defaultValue="recent" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="detections">License Plate Detections</TabsTrigger>
-          <TabsTrigger value="watchlist">Watch List</TabsTrigger>
+          <TabsTrigger value="recent">Recent Detections</TabsTrigger>
+          <TabsTrigger value="search">Search & Analytics</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="detections" className="space-y-6">
-          {/* Filters */}
-          <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filters & Search
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex-1 min-w-[200px]">
-              <Label htmlFor="search">Search License Plates</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Search by plate number or description..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="min-w-[150px]">
-              <Label>Severity</Label>
-              <Select value={severityFilter} onValueChange={setSeverityFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Severities</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="min-w-[150px]">
-              <Label>Time Range</Label>
-              <Select value={timeFilter} onValueChange={setTimeFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="1h">Last Hour</SelectItem>
-                  <SelectItem value="6h">Last 6 Hours</SelectItem>
-                  <SelectItem value="24h">Last 24 Hours</SelectItem>
-                  <SelectItem value="7d">Last 7 Days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Results */}
-      <Card>
-        <CardHeader>
-          <CardTitle>License Plate Detections</CardTitle>
-          <CardDescription>
-            {filteredEvents.length} result{filteredEvents.length !== 1 ? 's' : ''} found
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {filteredEvents.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Car className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No license plate captures found matching your criteria.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredEvents.map((event) => (
-                <div key={event.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    {event.licensePlateThumbnail && (
-                      <img 
-                        src={event.licensePlateThumbnail} 
-                        alt="License plate thumbnail"
-                        className="w-16 h-10 object-cover rounded border"
-                      />
-                    )}
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-lg font-bold">
-                          {event.licensePlate}
-                        </span>
-                        <Badge variant={getSeverityColor(event.severity) as any}>
-                          {getSeverityIcon(event.severity)}
-                          {event.severity}
-                        </Badge>
-                        {event.licensePlateConfidence && (
-                          <Badge variant="outline">
-                            {Math.round(event.licensePlateConfidence * 100)}% confidence
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        {event.description}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Camera {event.cameraId}</span>
-                        <span>{formatTimestamp(event.timestamp)}</span>
-                        {event.metadata && typeof event.metadata === 'object' && 'vehicle_type' in event.metadata && (
-                          (() => {
-                            const meta = event.metadata as Record<string, any>;
-                            return (
-                              <span>{String(meta.vehicle_type)} • {String(meta.color)}</span>
-                            );
-                          })()
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      if (event.metadata && typeof event.metadata === 'object' && 'alert_reason' in event.metadata) {
-                        const meta = event.metadata as Record<string, any>;
-                        return (
-                          <Badge variant="destructive">
-                            {String(meta.alert_reason)}
-                          </Badge>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-        </TabsContent>
-
-        <TabsContent value="watchlist" className="space-y-6">
+        <TabsContent value="recent" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="w-5 h-5" />
-                    Vehicle Watch List
-                  </CardTitle>
-                  <CardDescription>
-                    Manage stolen vehicles and vehicles of interest
-                  </CardDescription>
-                </div>
-                <Button className="flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  Add to Watch List
-                </Button>
-              </div>
+              <CardTitle>Recent License Plate Detections</CardTitle>
+              <CardDescription>
+                Latest vehicle detections with comprehensive analytics
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-                <h3 className="text-lg font-medium mb-2">No Watch List Entries</h3>
-                <p>Add vehicles to your watch list to automatically flag license plate detections.</p>
-              </div>
+              {detectionsLoading ? (
+                <div className="text-center py-8">Loading detections...</div>
+              ) : recentDetections.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No license plate detections found
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentDetections.map((detection: VehicleAnalytics) => (
+                    <div key={detection.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Badge 
+                            variant="outline" 
+                            className="text-lg font-mono font-bold"
+                          >
+                            {detection.licensePlate}
+                          </Badge>
+                          <div 
+                            className={`w-3 h-3 rounded-full ${getConfidenceColor(detection.licensePlateConfidence)}`}
+                            title={`Confidence: ${detection.licensePlateConfidence}%`}
+                          />
+                          {detection.isWatchListed && (
+                            <Badge variant="destructive">
+                              <AlertTriangle className="w-3 h-3 mr-1" />
+                              Watch List
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {formatDateTime(detection.timestamp)}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                          <span>{detection.location}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Camera className="w-4 h-4 text-muted-foreground" />
+                          <span>Camera {detection.cameraId}</span>
+                        </div>
+                        {detection.speed && (
+                          <div className="flex items-center gap-2">
+                            <Gauge className="w-4 h-4 text-muted-foreground" />
+                            <span className={getSpeedColor(detection.speed)}>
+                              {detection.speed} mph
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <span>{detection.processingTime}ms</span>
+                        </div>
+                      </div>
+
+                      {(detection.make || detection.model || detection.color || detection.year) && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          {detection.make && (
+                            <div>
+                              <span className="font-medium">Make:</span> {detection.make}
+                            </div>
+                          )}
+                          {detection.model && (
+                            <div>
+                              <span className="font-medium">Model:</span> {detection.model}
+                            </div>
+                          )}
+                          {detection.color && (
+                            <div>
+                              <span className="font-medium">Color:</span> {detection.color}
+                            </div>
+                          )}
+                          {detection.year && (
+                            <div>
+                              <span className="font-medium">Year:</span> {detection.year}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {detection.plateSnapshot && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm font-medium mb-2">License Plate</p>
+                            <img 
+                              src={detection.plateSnapshot} 
+                              alt="License plate snapshot"
+                              className="w-full max-w-xs rounded border"
+                            />
+                          </div>
+                          {detection.vehicleSnapshot && (
+                            <div>
+                              <p className="text-sm font-medium mb-2">Vehicle</p>
+                              <img 
+                                src={detection.vehicleSnapshot} 
+                                alt="Vehicle snapshot"
+                                className="w-full max-w-xs rounded border"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="search" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Search License Plates</CardTitle>
+              <CardDescription>
+                Search for specific license plate detections and view analytics
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter license plate (e.g., ABC-1234)"
+                  value={searchPlate}
+                  onChange={(e) => setSearchPlate(e.target.value.toUpperCase())}
+                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                  className="font-mono"
+                />
+                <Button 
+                  onClick={handleSearch} 
+                  disabled={searchMutation.isPending || !searchPlate.trim()}
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  Search
+                </Button>
+              </div>
+
+              {searchMutation.data && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Search Results for {searchPlate}</h3>
+                  {searchMutation.data.length === 0 ? (
+                    <Alert>
+                      <AlertDescription>
+                        No detections found for license plate "{searchPlate}"
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="space-y-2">
+                      {searchMutation.data.map((detection: VehicleAnalytics) => (
+                        <div key={detection.id} className="border rounded p-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="font-mono font-bold">{detection.licensePlate}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {formatDateTime(detection.timestamp)} • {detection.location}
+                              </div>
+                              {detection.make && detection.model && (
+                                <div className="text-sm">
+                                  {detection.year} {detection.make} {detection.model} ({detection.color})
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className={`text-sm ${getSpeedColor(detection.speed)}`}>
+                                {detection.speed ? `${detection.speed} mph` : "Speed N/A"}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {detection.licensePlateConfidence}% confidence
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="dashboard" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Top Vehicle Makes */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Vehicle Makes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {dashboard?.topVehicleMakes?.length > 0 ? (
+                  <div className="space-y-3">
+                    {dashboard.topVehicleMakes.map((make, index) => (
+                      <div key={make.make} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-xs">
+                            {index + 1}
+                          </div>
+                          <span>{make.make}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">{make.count}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {make.percentage.toFixed(1)}%
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground py-4">
+                    No vehicle make data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Speed Analytics */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Speed Analytics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {dashboard?.speedAnalytics ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-2xl font-bold">
+                          {dashboard.speedAnalytics.averageSpeed.toFixed(1)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Average Speed (mph)</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-red-500">
+                          {dashboard.speedAnalytics.maxSpeed}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Max Speed (mph)</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {dashboard.speedAnalytics.speedDistribution.map((range) => (
+                        <div key={range.range} className="flex justify-between">
+                          <span className="text-sm">{range.range}</span>
+                          <span className="font-medium">{range.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground py-4">
+                    No speed data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

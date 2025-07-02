@@ -184,7 +184,7 @@ export default function Integrations() {
                         </Button>
                       </div>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        You can find your API key in your Chekt dashboard under Settings → API Keys
+                        Find your API key under Bridge Settings, Network, Local API Service
                       </p>
                     </div>
 
