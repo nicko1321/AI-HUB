@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { registerTenantRoutes } from "./tenant-routes";
 import { insertHubSchema, insertCameraSchema, insertEventSchema, insertSpeakerSchema, insertAITriggerSchema, insertWatchListSchema } from "@shared/schema";
 import { z } from "zod";
 import JetsonCameraManager, { 
@@ -32,6 +33,10 @@ if (jetsonManager) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register multi-tenant routes first
+  registerTenantRoutes(app);
+  
+  // Legacy/demo routes (for existing non-tenant usage)
   // Hub routes
   app.get("/api/hubs", async (req, res) => {
     try {

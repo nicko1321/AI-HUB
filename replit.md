@@ -207,6 +207,10 @@ The system is configured for deployment on multiple platforms:
 
 ```
 Changelog:
+- July 2, 2025. Implemented multi-tenant SaaS architecture for customer deployments and mobile surveillance fleet
+- July 2, 2025. Added complete customer isolation with API key authentication and hub licensing system
+- July 2, 2025. Created tenant management system with subscription tiers and usage billing
+- July 2, 2025. Deployed production system to Vercel with PostgreSQL database connectivity
 - June 30, 2025. Added comprehensive PTZ (Pan/Tilt/Zoom) control functionality for IP cameras with live view integration
 - June 30, 2025. Enhanced camera management with RTSP/ONVIF support and network discovery capabilities
 - June 30, 2025. Implemented advanced alert categorization system distinguishing safety alerts from normal notifications

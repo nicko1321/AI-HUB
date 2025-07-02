@@ -4,10 +4,231 @@ import {
   type Event, type InsertEvent,
   type Speaker, type InsertSpeaker,
   type AITrigger, type InsertAITrigger,
-  type WatchListEntry, type InsertWatchListEntry
+  type WatchListEntry, type InsertWatchListEntry,
+  hubs, cameras, events, speakers, aiTriggers, watchList
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
-// Simplified in-memory data store
+// Database storage interface
+interface IStorage {
+  // Hub operations
+  getHubs(): Promise<Hub[]>;
+  getHub(id: number): Promise<Hub | undefined>;
+  createHub(hub: InsertHub): Promise<Hub>;
+  updateHub(id: number, updates: Partial<Hub>): Promise<Hub | undefined>;
+  deleteHub(id: number): Promise<boolean>;
+  
+  // Camera operations
+  getCameras(): Promise<Camera[]>;
+  getCamerasByHub(hubId: number): Promise<Camera[]>;
+  getCamera(id: number): Promise<Camera | undefined>;
+  createCamera(camera: InsertCamera): Promise<Camera>;
+  updateCamera(id: number, updates: Partial<Camera>): Promise<Camera | undefined>;
+  deleteCamera(id: number): Promise<boolean>;
+  
+  // Event operations
+  getEvents(): Promise<Event[]>;
+  getEventsByHub(hubId: number): Promise<Event[]>;
+  getRecentEvents(limit?: number): Promise<Event[]>;
+  createEvent(event: InsertEvent): Promise<Event>;
+  acknowledgeEvent(id: number): Promise<Event | undefined>;
+  deleteEvent(id: number): Promise<boolean>;
+  
+  // Speaker operations
+  getSpeakers(): Promise<Speaker[]>;
+  getSpeakersByHub(hubId: number): Promise<Speaker[]>;
+  getSpeaker(id: number): Promise<Speaker | undefined>;
+  createSpeaker(speaker: InsertSpeaker): Promise<Speaker>;
+  updateSpeaker(id: number, updates: Partial<Speaker>): Promise<Speaker | undefined>;
+  deleteSpeaker(id: number): Promise<boolean>;
+  
+  // AI Trigger operations
+  getAITriggers(): Promise<AITrigger[]>;
+  getAITrigger(id: number): Promise<AITrigger | undefined>;
+  createAITrigger(trigger: InsertAITrigger): Promise<AITrigger>;
+  updateAITrigger(id: number, updates: Partial<AITrigger>): Promise<AITrigger | undefined>;
+  deleteAITrigger(id: number): Promise<boolean>;
+  
+  // Watch list operations
+  getWatchList(): Promise<WatchListEntry[]>;
+  getWatchListEntry(id: number): Promise<WatchListEntry | undefined>;
+  createWatchListEntry(entry: InsertWatchListEntry): Promise<WatchListEntry>;
+  updateWatchListEntry(id: number, updates: Partial<WatchListEntry>): Promise<WatchListEntry | undefined>;
+  deleteWatchListEntry(id: number): Promise<boolean>;
+  checkLicensePlateWatch(licensePlate: string): Promise<WatchListEntry | null>;
+}
+
+// Database storage implementation
+class DatabaseStorage implements IStorage {
+  // Hub operations
+  async getHubs(): Promise<Hub[]> {
+    return await db.select().from(hubs);
+  }
+
+  async getHub(id: number): Promise<Hub | undefined> {
+    const [hub] = await db.select().from(hubs).where(eq(hubs.id, id));
+    return hub || undefined;
+  }
+
+  async createHub(insertHub: InsertHub): Promise<Hub> {
+    const [hub] = await db.insert(hubs).values(insertHub).returning();
+    return hub;
+  }
+
+  async updateHub(id: number, updates: Partial<Hub>): Promise<Hub | undefined> {
+    const [hub] = await db.update(hubs).set(updates).where(eq(hubs.id, id)).returning();
+    return hub || undefined;
+  }
+
+  async deleteHub(id: number): Promise<boolean> {
+    const result = await db.delete(hubs).where(eq(hubs.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Camera operations
+  async getCameras(): Promise<Camera[]> {
+    return await db.select().from(cameras);
+  }
+
+  async getCamerasByHub(hubId: number): Promise<Camera[]> {
+    return await db.select().from(cameras).where(eq(cameras.hubId, hubId));
+  }
+
+  async getCamera(id: number): Promise<Camera | undefined> {
+    const [camera] = await db.select().from(cameras).where(eq(cameras.id, id));
+    return camera || undefined;
+  }
+
+  async createCamera(insertCamera: InsertCamera): Promise<Camera> {
+    const [camera] = await db.insert(cameras).values(insertCamera).returning();
+    return camera;
+  }
+
+  async updateCamera(id: number, updates: Partial<Camera>): Promise<Camera | undefined> {
+    const [camera] = await db.update(cameras).set(updates).where(eq(cameras.id, id)).returning();
+    return camera || undefined;
+  }
+
+  async deleteCamera(id: number): Promise<boolean> {
+    const result = await db.delete(cameras).where(eq(cameras.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Event operations
+  async getEvents(): Promise<Event[]> {
+    return await db.select().from(events).orderBy(desc(events.timestamp));
+  }
+
+  async getEventsByHub(hubId: number): Promise<Event[]> {
+    return await db.select().from(events).where(eq(events.hubId, hubId)).orderBy(desc(events.timestamp));
+  }
+
+  async getRecentEvents(limit: number = 10): Promise<Event[]> {
+    return await db.select().from(events).orderBy(desc(events.timestamp)).limit(limit);
+  }
+
+  async createEvent(insertEvent: InsertEvent): Promise<Event> {
+    const [event] = await db.insert(events).values(insertEvent).returning();
+    return event;
+  }
+
+  async acknowledgeEvent(id: number): Promise<Event | undefined> {
+    const [event] = await db.update(events).set({ acknowledged: true }).where(eq(events.id, id)).returning();
+    return event || undefined;
+  }
+
+  async deleteEvent(id: number): Promise<boolean> {
+    const result = await db.delete(events).where(eq(events.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Speaker operations
+  async getSpeakers(): Promise<Speaker[]> {
+    return await db.select().from(speakers);
+  }
+
+  async getSpeakersByHub(hubId: number): Promise<Speaker[]> {
+    return await db.select().from(speakers).where(eq(speakers.hubId, hubId));
+  }
+
+  async getSpeaker(id: number): Promise<Speaker | undefined> {
+    const [speaker] = await db.select().from(speakers).where(eq(speakers.id, id));
+    return speaker || undefined;
+  }
+
+  async createSpeaker(insertSpeaker: InsertSpeaker): Promise<Speaker> {
+    const [speaker] = await db.insert(speakers).values(insertSpeaker).returning();
+    return speaker;
+  }
+
+  async updateSpeaker(id: number, updates: Partial<Speaker>): Promise<Speaker | undefined> {
+    const [speaker] = await db.update(speakers).set(updates).where(eq(speakers.id, id)).returning();
+    return speaker || undefined;
+  }
+
+  async deleteSpeaker(id: number): Promise<boolean> {
+    const result = await db.delete(speakers).where(eq(speakers.id, id));
+    return result.rowCount > 0;
+  }
+
+  // AI Trigger operations
+  async getAITriggers(): Promise<AITrigger[]> {
+    return await db.select().from(aiTriggers);
+  }
+
+  async getAITrigger(id: number): Promise<AITrigger | undefined> {
+    const [trigger] = await db.select().from(aiTriggers).where(eq(aiTriggers.id, id));
+    return trigger || undefined;
+  }
+
+  async createAITrigger(insertTrigger: InsertAITrigger): Promise<AITrigger> {
+    const [trigger] = await db.insert(aiTriggers).values(insertTrigger).returning();
+    return trigger;
+  }
+
+  async updateAITrigger(id: number, updates: Partial<AITrigger>): Promise<AITrigger | undefined> {
+    const [trigger] = await db.update(aiTriggers).set(updates).where(eq(aiTriggers.id, id)).returning();
+    return trigger || undefined;
+  }
+
+  async deleteAITrigger(id: number): Promise<boolean> {
+    const result = await db.delete(aiTriggers).where(eq(aiTriggers.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Watch list operations
+  async getWatchList(): Promise<WatchListEntry[]> {
+    return await db.select().from(watchList);
+  }
+
+  async getWatchListEntry(id: number): Promise<WatchListEntry | undefined> {
+    const [entry] = await db.select().from(watchList).where(eq(watchList.id, id));
+    return entry || undefined;
+  }
+
+  async createWatchListEntry(insertEntry: InsertWatchListEntry): Promise<WatchListEntry> {
+    const [entry] = await db.insert(watchList).values(insertEntry).returning();
+    return entry;
+  }
+
+  async updateWatchListEntry(id: number, updates: Partial<WatchListEntry>): Promise<WatchListEntry | undefined> {
+    const [entry] = await db.update(watchList).set(updates).where(eq(watchList.id, id)).returning();
+    return entry || undefined;
+  }
+
+  async deleteWatchListEntry(id: number): Promise<boolean> {
+    const result = await db.delete(watchList).where(eq(watchList.id, id));
+    return result.rowCount > 0;
+  }
+
+  async checkLicensePlateWatch(licensePlate: string): Promise<WatchListEntry | null> {
+    const [entry] = await db.select().from(watchList).where(eq(watchList.identifier, licensePlate));
+    return entry || null;
+  }
+}
+
+// In-memory storage fallback for development
 class DataStore {
   public hubs: Map<number, Hub> = new Map();
   public cameras: Map<number, Camera> = new Map();
@@ -583,4 +804,5 @@ class DataStore {
   }
 }
 
-export const storage = new DataStore();
+// Use DatabaseStorage for production, DataStore for fallback
+export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new DataStore();
