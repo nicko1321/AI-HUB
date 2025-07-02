@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Video, Grid3x3, List, Settings, BarChart3, Shield, Car, Monitor } from "lucide-react";
+import { Video, Grid3x3, List, Settings, BarChart3, Shield, Car, Monitor, Cpu } from "lucide-react";
 import HubSelector from "./hub-selector";
 import { cn } from "@/lib/utils";
 import logoUrl from "@assets/alert360_logo.png_1751080963078.png";
@@ -13,6 +13,7 @@ const navigation = [
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Integrations", href: "/integrations", icon: Shield },
   { name: "Settings", href: "/settings", icon: Settings },
+  { name: "System Status", href: "/system-status", icon: Cpu },
 ];
 
 export default function Sidebar() {

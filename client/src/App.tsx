@@ -14,6 +14,7 @@ import LicensePlates from "@/pages/license-plates";
 import Analytics from "@/pages/analytics";
 import Integrations from "@/pages/integrations";
 import Settings from "@/pages/settings";
+import SystemStatus from "@/pages/system-status";
 import NotFound from "@/pages/not-found";
 
 // Theme provider context
@@ -40,6 +41,7 @@ function Router() {
             <Route path="/analytics" component={Analytics} />
             <Route path="/integrations" component={Integrations} />
             <Route path="/settings" component={Settings} />
+            <Route path="/system-status" component={SystemStatus} />
             <Route component={NotFound} />
           </Switch>
         </div>

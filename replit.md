@@ -21,6 +21,15 @@ Alert 360 Video Shield is a full-stack web application for managing security sys
 - **Development Server**: Custom Vite integration for hot module replacement
 - **Build Process**: ESBuild for server bundling
 
+### Hardware Integration Layer
+- **Target Platform**: NVIDIA Jetson Orin NX 16GB AI Hub
+- **Hardware Detection**: Automatic Jetson device tree detection
+- **Video Processing**: GStreamer with NVIDIA hardware acceleration (nvv4l2decoder, nvvidconv)
+- **Camera Protocols**: RTSP, ONVIF, HTTP, UDP, MIPI-CSI support
+- **AI Performance**: Up to 100 TOPS for real-time video analytics
+- **Network Discovery**: Automated ONVIF camera discovery with nmap
+- **PTZ Control**: Hardware-accelerated PTZ commands via ONVIF protocol
+
 ### Database Layer
 - **ORM**: Drizzle ORM with PostgreSQL dialect
 - **Database**: PostgreSQL (configured via environment variables)
@@ -129,6 +138,73 @@ The deployment error occurs because:
 - `DATABASE_URL`: PostgreSQL connection string (required)
 - `NODE_ENV`: Environment mode (development/production)
 - `REPL_ID`: Replit-specific identifier for development features
+
+### Jetson Orin NX 16GB Deployment
+
+#### Hardware Requirements
+- NVIDIA Jetson Orin NX 16GB AI Hub
+- JetPack 5.1+ installed via NVIDIA SDK Manager
+- Network connectivity for ONVIF camera discovery
+- IP cameras supporting RTSP/ONVIF protocols
+
+#### Jetson Setup Instructions
+1. **Flash Jetson with JetPack 5.1+**
+   ```bash
+   # Use NVIDIA SDK Manager to flash the device
+   # Ensure JetPack includes: CUDA, TensorRT, OpenCV, GStreamer
+   ```
+
+2. **Install Required Packages**
+   ```bash
+   sudo apt update
+   sudo apt install -y gstreamer1.0-tools gstreamer1.0-plugins-bad
+   sudo apt install -y gstreamer1.0-rtsp python3-onvif-zeep nmap
+   pip3 install opencv-python onvif-zeep
+   ```
+
+3. **Verify Hardware Capabilities**
+   ```bash
+   # Check GStreamer NVIDIA plugins
+   gst-inspect-1.0 | grep nvv4l2
+   
+   # Verify CUDA installation
+   nvcc --version
+   
+   # Check system resources
+   tegrastats
+   ```
+
+4. **Deploy Application**
+   ```bash
+   # Clone and deploy the same codebase to Jetson
+   git clone <repository-url>
+   cd alert360-video-shield
+   npm install
+   npm run build
+   npm run start
+   ```
+
+5. **Configure Power Mode** (Optional for performance optimization)
+   ```bash
+   # Set power mode for optimal performance
+   sudo nvpmodel -m 0  # Max performance (40W)
+   sudo jetson_clocks   # Lock clocks to maximum
+   ```
+
+#### Hardware Features Enabled on Jetson
+- **Automatic Hardware Detection**: System detects Jetson device tree and enables hardware acceleration
+- **GStreamer Hardware Acceleration**: Uses nvv4l2decoder, nvvidconv for efficient video processing
+- **ONVIF Camera Discovery**: Network scanning and automatic camera detection
+- **PTZ Hardware Control**: Real-time PTZ commands via ONVIF protocol
+- **System Monitoring**: CPU, GPU, memory, and thermal monitoring via tegrastats
+- **Multi-Stream Processing**: Up to 8 simultaneous camera streams with hardware acceleration
+
+#### Performance Optimizations
+- Hardware-accelerated H.264/H.265 decoding
+- Zero-copy memory operations with NVMM
+- Configurable power modes (10W-40W)
+- Real-time AI inference up to 100 TOPS
+- Low-latency RTSP streaming with buffer optimization
 
 ## Changelog
 

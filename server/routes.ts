@@ -3,6 +3,33 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertHubSchema, insertCameraSchema, insertEventSchema, insertSpeakerSchema, insertAITriggerSchema, insertWatchListSchema } from "@shared/schema";
 import { z } from "zod";
+import JetsonCameraManager, { 
+  isRunningOnJetson, 
+  checkJetsonCapabilities, 
+  JETSON_SPECS 
+} from "./jetson-integration";
+
+// Initialize Jetson camera manager if running on Jetson hardware
+const jetsonManager = isRunningOnJetson() ? new JetsonCameraManager() : null;
+
+if (jetsonManager) {
+  console.log('🤖 Jetson Orin NX detected - Hardware acceleration enabled');
+  
+  // Set up event listeners for hardware camera management
+  jetsonManager.on('streamStarted', ({ cameraId, camera }) => {
+    console.log(`Hardware stream started for camera ${cameraId} at ${camera.ip}`);
+  });
+  
+  jetsonManager.on('streamEnded', ({ cameraId, code }) => {
+    console.log(`Hardware stream ended for camera ${cameraId} with code ${code}`);
+  });
+  
+  jetsonManager.on('ptzCommandExecuted', ({ camera, command }) => {
+    console.log(`PTZ command executed on ${camera.ip}:`, command);
+  });
+} else {
+  console.log('💻 Running in simulation mode - No Jetson hardware detected');
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Hub routes
@@ -376,6 +403,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ match });
     } catch (error) {
       res.status(500).json({ message: "Failed to check license plate" });
+    }
+  });
+
+  // Jetson hardware integration endpoints
+  app.get("/api/jetson/status", async (req, res) => {
+    try {
+      const isJetson = isRunningOnJetson();
+      const capabilities = isJetson ? await checkJetsonCapabilities() : null;
+      const metrics = jetsonManager ? await jetsonManager.getJetsonMetrics() : null;
+      
+      res.json({
+        isJetsonHardware: isJetson,
+        specs: JETSON_SPECS,
+        capabilities,
+        metrics,
+        manager: !!jetsonManager
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get Jetson status" });
+    }
+  });
+
+  app.post("/api/jetson/discover-cameras", async (req, res) => {
+    try {
+      if (!jetsonManager) {
+        res.status(400).json({ message: "Jetson hardware not available" });
+        return;
+      }
+
+      const { networkRange } = req.body;
+      const cameras = await jetsonManager.discoverONVIFCameras(networkRange);
+      res.json({ cameras });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to discover cameras" });
+    }
+  });
+
+  app.post("/api/jetson/camera/:id/stream/start", async (req, res) => {
+    try {
+      if (!jetsonManager) {
+        res.status(400).json({ message: "Jetson hardware not available" });
+        return;
+      }
+
+      const { id } = req.params;
+      const { camera, profileIndex = 0 } = req.body;
+      
+      const success = await jetsonManager.startCameraStream(id, camera, profileIndex);
+      res.json({ success });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to start camera stream" });
+    }
+  });
+
+  app.post("/api/jetson/camera/:id/stream/stop", async (req, res) => {
+    try {
+      if (!jetsonManager) {
+        res.status(400).json({ message: "Jetson hardware not available" });
+        return;
+      }
+
+      const { id } = req.params;
+      const success = jetsonManager.stopCameraStream(id);
+      res.json({ success });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to stop camera stream" });
+    }
+  });
+
+  app.post("/api/jetson/camera/ptz", async (req, res) => {
+    try {
+      if (!jetsonManager) {
+        res.status(400).json({ message: "Jetson hardware not available" });
+        return;
+      }
+
+      const { camera, command } = req.body;
+      const success = await jetsonManager.sendPTZCommand(camera, command);
+      res.json({ success });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to execute PTZ command" });
     }
   });
 
