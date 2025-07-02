@@ -57,12 +57,54 @@ function initializeSampleData() {
 
   // Create sample cameras
   const sampleCameras: Camera[] = [
-    { id: 1, hubId: 1, name: "Camera 01", location: "Entrance", ipAddress: "192.168.1.100", status: "online", isRecording: true, streamUrl: "rtsp://192.168.1.100/stream", thumbnailUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" },
-    { id: 2, hubId: 1, name: "Camera 02", location: "Lobby", ipAddress: "192.168.1.101", status: "online", isRecording: true, streamUrl: "rtsp://192.168.1.101/stream", thumbnailUrl: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" },
-    { id: 3, hubId: 1, name: "Camera 03", location: "Server Room", ipAddress: "192.168.1.102", status: "online", isRecording: true, streamUrl: "rtsp://192.168.1.102/stream", thumbnailUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" },
-    { id: 4, hubId: 2, name: "Camera 04", location: "Parking Garage", ipAddress: "192.168.1.200", status: "online", isRecording: true, streamUrl: "rtsp://192.168.1.200/stream", thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" },
-    { id: 5, hubId: 2, name: "Camera 05", location: "Parking Exit", ipAddress: "192.168.1.201", status: "online", isRecording: true, streamUrl: "rtsp://192.168.1.201/stream", thumbnailUrl: "https://images.unsplash.com/photo-1497366412874-3415097a27e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" },
-    { id: 6, hubId: 3, name: "Camera 06", location: "Perimeter North", ipAddress: "192.168.1.300", status: "offline", isRecording: false, streamUrl: "rtsp://192.168.1.300/stream", thumbnailUrl: null },
+    { 
+      id: 1, hubId: 1, name: "Camera 01", location: "Entrance", ipAddress: "192.168.1.100", 
+      status: "online", isRecording: true, streamUrl: "rtsp://admin:password@192.168.1.100:554/stream", 
+      thumbnailUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+      protocol: "rtsp", port: 554, username: "admin", password: "password", streamPath: "/stream",
+      onvifPort: 80, resolution: "1920x1080", fps: 30, codec: "H.264", ptzCapable: false,
+      audioEnabled: true, nightVision: true, motionDetection: true
+    },
+    { 
+      id: 2, hubId: 1, name: "Camera 02", location: "Lobby", ipAddress: "192.168.1.101", 
+      status: "online", isRecording: true, streamUrl: "rtsp://admin:password@192.168.1.101:554/stream", 
+      thumbnailUrl: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+      protocol: "rtsp", port: 554, username: "admin", password: "password", streamPath: "/stream",
+      onvifPort: 80, resolution: "1920x1080", fps: 30, codec: "H.264", ptzCapable: true,
+      audioEnabled: false, nightVision: false, motionDetection: true
+    },
+    { 
+      id: 3, hubId: 1, name: "Camera 03", location: "Server Room", ipAddress: "192.168.1.102", 
+      status: "online", isRecording: true, streamUrl: "rtsp://192.168.1.102:554/stream", 
+      thumbnailUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+      protocol: "rtsp", port: 554, username: null, password: null, streamPath: "/stream",
+      onvifPort: 80, resolution: "1280x720", fps: 15, codec: "H.264", ptzCapable: false,
+      audioEnabled: false, nightVision: true, motionDetection: true
+    },
+    { 
+      id: 4, hubId: 2, name: "Camera 04", location: "Parking Garage", ipAddress: "192.168.1.200", 
+      status: "online", isRecording: true, streamUrl: "rtsp://user:pass123@192.168.1.200:554/cam1", 
+      thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+      protocol: "rtsp", port: 554, username: "user", password: "pass123", streamPath: "/cam1",
+      onvifPort: 80, resolution: "1920x1080", fps: 25, codec: "H.265", ptzCapable: true,
+      audioEnabled: true, nightVision: true, motionDetection: true
+    },
+    { 
+      id: 5, hubId: 2, name: "Camera 05", location: "Parking Exit", ipAddress: "192.168.1.201", 
+      status: "online", isRecording: true, streamUrl: "rtsp://192.168.1.201:8554/live", 
+      thumbnailUrl: "https://images.unsplash.com/photo-1497366412874-3415097a27e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+      protocol: "rtsp", port: 8554, username: null, password: null, streamPath: "/live",
+      onvifPort: 8080, resolution: "2560x1440", fps: 30, codec: "H.264", ptzCapable: false,
+      audioEnabled: false, nightVision: true, motionDetection: true
+    },
+    { 
+      id: 6, hubId: 3, name: "Camera 06", location: "Perimeter North", ipAddress: "192.168.1.300", 
+      status: "offline", isRecording: false, streamUrl: "rtsp://192.168.1.300:554/stream", 
+      thumbnailUrl: null,
+      protocol: "rtsp", port: 554, username: null, password: null, streamPath: "/stream",
+      onvifPort: 80, resolution: "1920x1080", fps: 30, codec: "H.264", ptzCapable: false,
+      audioEnabled: false, nightVision: false, motionDetection: true
+    },
   ];
 
   sampleCameras.forEach(camera => data.cameras.set(camera.id, camera));

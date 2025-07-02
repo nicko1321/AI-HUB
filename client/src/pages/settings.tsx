@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useHubs } from "@/hooks/use-hub-data";
+import { useHubs, useCameras } from "@/hooks/use-hub-data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,176 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings2, Network, Users, Shield, Database, Activity } from "lucide-react";
+import CameraManagement from "@/components/camera-management";
+import { Settings2, Network, Users, Shield, Database, Activity, Video } from "lucide-react";
 import { getStatusColor } from "@/lib/utils";
+
+// Camera Manager Section Component
+function CameraManagerSection({ hubs }: { hubs: any[] | undefined }) {
+  const [selectedHubId, setSelectedHubId] = useState<number>(hubs?.[0]?.id || 1);
+  const { data: cameras, isLoading: camerasLoading } = useCameras(selectedHubId);
+
+  if (!hubs?.length) {
+    return (
+      <Card className="bg-slate-850 border-slate-700">
+        <CardContent className="text-center py-12">
+          <Video className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+          <p className="text-slate-400">No hubs available</p>
+          <p className="text-slate-500 text-sm mt-1">Add a hub first to manage cameras</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      {/* Hub Selection */}
+      <Card className="bg-slate-850 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white">Select Hub</CardTitle>
+          <CardDescription className="text-slate-400">
+            Choose which hub to manage cameras for
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {hubs.map((hub) => (
+              <Button
+                key={hub.id}
+                variant={selectedHubId === hub.id ? "default" : "outline"}
+                onClick={() => setSelectedHubId(hub.id)}
+                className={selectedHubId === hub.id ? 
+                  "bg-sky-500 hover:bg-sky-600" : 
+                  "border-slate-600 text-slate-300 hover:text-white"
+                }
+              >
+                {hub.name}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Camera Management */}
+      <Card className="bg-slate-850 border-slate-700">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-white">Camera Management</CardTitle>
+              <CardDescription className="text-slate-400">
+                Manage IP cameras connected via RTSP, ONVIF, or HTTP protocols
+              </CardDescription>
+            </div>
+            <CameraManagement hubId={selectedHubId} cameras={cameras || []} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {camerasLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 bg-slate-800" />
+              ))}
+            </div>
+          ) : cameras?.length ? (
+            <div className="space-y-4">
+              {cameras.map((camera) => (
+                <div
+                  key={camera.id}
+                  className="flex items-center justify-between p-4 bg-slate-900 rounded-lg border border-slate-700"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-3 h-3 rounded-full ${getStatusColor(camera.status)}`} />
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <h3 className="text-white font-medium">{camera.name}</h3>
+                        <Badge variant="outline" className="border-slate-600 text-slate-300 text-xs">
+                          {camera.protocol?.toUpperCase()}
+                        </Badge>
+                        {camera.ptzCapable && (
+                          <Badge variant="secondary" className="text-xs">PTZ</Badge>
+                        )}
+                        {camera.nightVision && (
+                          <Badge variant="secondary" className="text-xs">Night Vision</Badge>
+                        )}
+                      </div>
+                      <p className="text-slate-400 text-sm">{camera.location}</p>
+                      <div className="flex items-center space-x-4 text-slate-500 text-xs mt-1">
+                        <span>{camera.ipAddress}:{camera.port}</span>
+                        <span>•</span>
+                        <span>{camera.resolution}</span>
+                        <span>•</span>
+                        <span>{camera.fps} FPS</span>
+                        <span>•</span>
+                        <span>{camera.codec}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Badge 
+                      variant="outline" 
+                      className={`border-slate-600 capitalize ${
+                        camera.status === "online" ? "text-green-400" : 
+                        camera.status === "offline" ? "text-red-400" : "text-amber-400"
+                      }`}
+                    >
+                      {camera.status}
+                    </Badge>
+                    {camera.isRecording && (
+                      <Badge variant="destructive" className="text-xs">
+                        REC
+                      </Badge>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-slate-600 text-slate-300 hover:text-white"
+                    >
+                      Configure
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Video className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <p className="text-slate-400">No cameras configured</p>
+              <p className="text-slate-500 text-sm mt-1">
+                Add cameras to start monitoring this hub
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Camera Network Tools */}
+      <Card className="bg-slate-850 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white">Network Tools</CardTitle>
+          <CardDescription className="text-slate-400">
+            Network utilities for camera discovery and testing
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white">
+              <Network className="w-4 h-4 mr-2" />
+              Scan Network
+            </Button>
+            <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white">
+              <Activity className="w-4 h-4 mr-2" />
+              Test Connections
+            </Button>
+            <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white">
+              <Database className="w-4 h-4 mr-2" />
+              Export Config
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
 
 export default function Settings() {
   const { data: hubs, isLoading } = useHubs();
@@ -50,6 +218,10 @@ export default function Settings() {
               <TabsTrigger value="hubs" className="data-[state=active]:bg-slate-700">
                 <Network className="w-4 h-4 mr-2" />
                 Hub Management
+              </TabsTrigger>
+              <TabsTrigger value="cameras" className="data-[state=active]:bg-slate-700">
+                <Video className="w-4 h-4 mr-2" />
+                Camera Management
               </TabsTrigger>
               <TabsTrigger value="users" className="data-[state=active]:bg-slate-700">
                 <Users className="w-4 h-4 mr-2" />
@@ -150,6 +322,11 @@ export default function Settings() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Camera Management */}
+            <TabsContent value="cameras" className="space-y-6">
+              <CameraManagerSection hubs={hubs} />
             </TabsContent>
 
             {/* User Management */}

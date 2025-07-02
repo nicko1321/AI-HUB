@@ -23,6 +23,20 @@ export const cameras = pgTable("cameras", {
   isRecording: boolean("is_recording").notNull().default(false),
   streamUrl: text("stream_url"),
   thumbnailUrl: text("thumbnail_url"),
+  // Enhanced camera configuration
+  protocol: text("protocol").notNull().default("rtsp"), // rtsp, onvif, http
+  port: integer("port").default(554), // Default RTSP port
+  username: text("username"),
+  password: text("password"),
+  streamPath: text("stream_path").default("/stream"), // RTSP stream path
+  onvifPort: integer("onvif_port").default(80), // ONVIF service port
+  resolution: text("resolution").default("1920x1080"),
+  fps: integer("fps").default(30),
+  codec: text("codec").default("H.264"), // H.264, H.265, MJPEG
+  ptzCapable: boolean("ptz_capable").notNull().default(false),
+  audioEnabled: boolean("audio_enabled").notNull().default(false),
+  nightVision: boolean("night_vision").notNull().default(false),
+  motionDetection: boolean("motion_detection").notNull().default(true),
 });
 
 export const events = pgTable("events", {

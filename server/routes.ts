@@ -57,6 +57,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/cameras", async (req, res) => {
+    try {
+      const cameraData = insertCameraSchema.parse(req.body);
+      const camera = await storage.createCamera(cameraData);
+      res.status(201).json(camera);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid camera data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create camera" });
+      }
+    }
+  });
+
+  app.put("/api/cameras/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const camera = await storage.updateCamera(id, updates);
+      if (!camera) {
+        return res.status(404).json({ message: "Camera not found" });
+      }
+      res.json(camera);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update camera" });
+    }
+  });
+
+  app.delete("/api/cameras/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCamera(id);
+      if (!success) {
+        return res.status(404).json({ message: "Camera not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete camera" });
+    }
+  });
+
   // Event routes
   app.get("/api/events", async (req, res) => {
     try {
